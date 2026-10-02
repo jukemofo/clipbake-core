@@ -1,0 +1,89 @@
+# ==========================================
+# Dependencies (Thư viện phụ thuộc)
+# ==========================================
+node_modules/
+/.pnp
+.pnp.js
+
+# ==========================================
+# Build Output (File sau khi build/transpile)
+# ==========================================
+dist/
+build/
+lib/
+out/
+# Cache build của TypeScript (khi bật incremental trong tsconfig.json)
+*.tsbuildinfo
+
+# ==========================================
+# Logs
+# ==========================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ==========================================
+# Testing & Code Coverage
+# ==========================================
+coverage/
+*.lcov
+.nyc_output/
+.vitest/
+
+# ==========================================
+# Environment & Secrets (Biến môi trường)
+# ==========================================
+.env
+.env.local
+.env.*.local
+.env.*
+# Ngoại lệ: Giữ lại file mẫu để người khác tham khảo
+!.env.example
+
+# ==========================================
+# IDE & Code Editors
+# ==========================================
+.idea/
+.vscode/*
+# Giữ lại config chung cho team nếu cần (comment lại nếu muốn bỏ qua toàn bộ .vscode)
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# ==========================================
+# OS Generated Files (Hệ điều hành)
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ==========================================
+# Caches & Temporary Files (Bộ nhớ đệm)
+# ==========================================
+.cache/
+.parcel-cache/
+.eslintcache
+.prettiercache
+.turbo/
+.rollup.cache/
+tmp/
+temp/
+
+# ==========================================
+# Package Tarballs (File đóng gói thử nghiệm)
+# ==========================================
+# Tránh commit file .tgz tạo ra từ lệnh `npm pack`
+*.tgz

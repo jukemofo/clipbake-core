@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Clipbake Playground</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body class="h-full">
+    <div class="flex flex-col gap-y-2 w-full h-full container p-4">
+      <div class="flex flex-col gap-y-4 items-start">
+        <h1>🎬 Clipbake Core Playground</h1>
+        <button
+          id="playBtn"
+          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+        >
+          Play Video
+        </button>
+        <p id="time">0.00</p>
+      </div>
+
+      <!-- Thẻ cha bọc ngoài: cố định 500px -->
+      <div class="w-[800px] aspect-video">
+        <canvas id="canvas" class="block w-full h-full object-contain"></canvas>
+      </div>
+    </div>
+
+    <!-- Trỏ thẳng vào file TS nguồn, Vite tự biên dịch luôn không cần chờ build! -->
+    <script type="module">
+      import { engine } from "./src/index.ts";
+      const btn = document.getElementById("playBtn");
+      const time = document.getElementById("time");
+      const canvas = document.getElementById("canvas");
+      engine.init(canvas);
+
+      engine.sub("playback:time-update", (data) => {
+        time.innerHTML = data.toFixed(3);
+      });
+      btn.onclick = async () => {
+        // const url =
+        //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/How%20To%20Animate%20Your%20Own%20Custom%20Characters%20in%20Premiere%20Pro!%20-%20finzar%20(1080p%2C%20h264).mp4";
+        // const audio =
+        //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/sabrina.mp3";
+        // const img =
+        //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/next.png";
+
+        const video = "preview.mp4";
+        // const audio = "5-way.mp3";
+        // const img = "next.png";
+        const root = await navigator.storage.getDirectory();
+        const fileHandle = await root.getFileHandle(video);
+        const file = await fileHandle.getFile();
+        const source = await engine.addVideoSource({
+          id: "video-source-id",
+          inputSource: file,
+          proxySource: file,
+        });
+        // engine.togglePlay();
+
+        // ---------------------------------------------
+        // const tempInput = document.createElement("input");
+        // tempInput.type = "file";
+        // tempInput.accept = "video/*,audio/*,image/*"; // Giới hạn chọn file media
+
+        // // 2. Lắng nghe khi người dùng chọn file xong
+        // tempInput.addEventListener("change", async (event) => {
+        //   const file = event.target.files[0];
+        //   if (!file) return;
+
+        //   try {
+        //     // 3. Kết nối OPFS và tạo file trùng tên
+        //     const root = await navigator.storage.getDirectory();
+        //     const opfsFileHandle = await root.getFileHandle(file.name, {
+        //       create: true,
+        //     });
+        //     // 4. Đổ trực tiếp luồng stream của file vào OPFS
+        //     const writableStream = await opfsFileHandle.createWritable();
+        //     await file.stream().pipeTo(writableStream);
+        //   } catch (error) {
+        //     console.error(error);
+        //   }
+        // });
+
+        // // 3. Kích hoạt hộp thoại mở file của hệ thống ngay lập tức
+        // tempInput.click();
+      };
+    </script>
+  </body>
+</html>
