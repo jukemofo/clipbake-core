@@ -1,5 +1,9 @@
 import { app, init } from "./canvas";
-import { SourceManager, sourceManager } from "./data-manager/source-manager";
+import { SourceManager, sourceManager } from "./manager/source-manager";
+import { addVideoClip } from "./handle-case/add-video-clip";
+import { addVideoSource } from "./handle-case/add-video-source";
+import { addVideoTrack } from "./handle-case/add-video-track";
+import { initCanvas } from "./handle-case/init-canvas";
 import { PlaybackController } from "./render/playback-controller";
 import { WrappedMainToWorkerMessage } from "./types";
 import { sendToMain } from "./util";
@@ -12,84 +16,40 @@ const playbackController = new PlaybackController((currentTime: number) => {});
 
 self.onmessage = (e: MessageEvent<WrappedMainToWorkerMessage>) => {
   taskQueue.then(async () => {
-    const msg = e.data;
-    const requestId = msg.requestId;
+    const { requestId, ...restMessage } = e.data;
 
-    switch (msg.type) {
+    switch (restMessage.type) {
       case "INIT":
-        const {
-          canvas,
-          width: initWidth,
-          height: initHeight,
-          backgroundColor,
-        } = msg;
-        await init(canvas, {
-          width: initWidth,
-          height: initHeight,
-          backgroundColor: backgroundColor,
-        });
-
-        const style = new TextStyle({
-          fontFamily: "Arial",
-          fontSize: 150,
-          fontWeight: "bold",
-          fill: "#ffffff", // Chữ màu trắng
-          dropShadow: {
-            color: "#000000",
-            blur: 4,
-            angle: Math.PI / 6,
-            distance: 6,
-          },
-        });
-
-        const textSample = new Text({
-          text: "Hello PixiJS v8!",
-          style: style,
-        });
-        textSample.anchor.set(0.5);
-        textSample.x = app!.screen.width / 2;
-        textSample.y = app!.screen.height / 2;
-        app!.stage.addChild(textSample);
-        sendToMain({ type: "INIT_COMPLETED", requestId });
+        await initCanvas(restMessage, requestId);
         break;
       case "PLAY":
-        console.log(sourceManager.totalSources);
-        const { startTime, basePerfTime } = msg;
+        const { startTime, basePerfTime } = restMessage;
         playbackController.play(startTime, basePerfTime);
         break;
       case "PAUSE":
-        const { time: pausedTime } = msg;
+        const { time: pausedTime } = restMessage;
         playbackController.pause(pausedTime);
         break;
       case "SEEK":
-        const { time: seekedTime, highQuality } = msg;
-        sendToMain({ type: "SEEK_RESOLVED", time: seekedTime, requestId });
+        const { time: seekedTime, highQuality } = restMessage;
+        sendToMain({
+          type: "SEEK_RESOLVED",
+          time: seekedTime,
+          status: "success",
+          requestId,
+        });
         break;
       case "RESIZE":
-        const { width: resizeWidth, height: resizeHeight } = msg;
+        const { width: resizeWidth, height: resizeHeight } = restMessage;
         break;
-      case "SOURCE_VIDEO_ADD":
-        try {
-          const source = await sourceManager.fromVideoSource(msg);
-
-          sendToMain({
-            type: "SOURCE_VIDEO_ADD_FINISHED",
-            status: "success",
-            data: SourceManager.toVideoSourcePreview(source),
-            requestId,
-          });
-        } catch (e) {
-          let message = "Something went wrong!";
-          if (e instanceof Error) {
-            message = e.message;
-          }
-          sendToMain({
-            type: "SOURCE_VIDEO_ADD_FINISHED",
-            status: "failed",
-            errorMsg: message,
-            requestId,
-          });
-        }
+      case "ADD_VIDEO_SOURCE":
+        await addVideoSource(restMessage, requestId);
+        break;
+      case "ADD_VIDEO_TRACK":
+        await addVideoTrack(restMessage, requestId);
+        break;
+      case "ADD_VIDEO_CLIP":
+        await addVideoClip(restMessage, requestId);
         break;
     }
   });

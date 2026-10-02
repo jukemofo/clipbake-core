@@ -2,7 +2,7 @@ import { Builder } from "builder-pattern";
 import {
   VideoSourcePreview,
   VideoSourceWorker,
-} from "../../core-manager/sources";
+} from "../../core-manager/source";
 import {
   ALL_FORMATS,
   AudioBufferSink,
@@ -22,7 +22,7 @@ type SourceParam = {
 export class SourceManager {
   private _videoSources: Map<string, VideoSourceWorker> = new Map();
 
-  public async fromVideoSource({
+  public async addVideoSource({
     id,
     inputSource,
     proxySource,
@@ -130,6 +130,10 @@ export class SourceManager {
 
   public get totalSources() {
     return this._videoSources.size;
+  }
+
+  public getVideoSource(id: string) {
+    return this._videoSources.get(id);
   }
 }
 

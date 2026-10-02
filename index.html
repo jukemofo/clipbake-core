@@ -49,11 +49,30 @@
         const root = await navigator.storage.getDirectory();
         const fileHandle = await root.getFileHandle(video);
         const file = await fileHandle.getFile();
-        const source = await engine.addVideoSource({
+        const source = await engine.core.addVideoSource({
           id: "video-source-id",
           inputSource: file,
           proxySource: file,
         });
+
+        const videoTrack = await engine.core.addVideoTrack({
+          id: "video-track-id",
+        });
+
+        const videoClip = await engine.core.addVideoClip({
+          id: "video-clip-id",
+          start: 0,
+          sourceStart: 10,
+          duration: 10,
+          trackId: videoTrack.id,
+          sourceId: source.id,
+          property: {
+            z: 10,
+          },
+        });
+        console.log(source);
+        console.log(videoTrack);
+        console.log(videoClip);
         // engine.togglePlay();
 
         // ---------------------------------------------

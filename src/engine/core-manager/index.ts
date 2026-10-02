@@ -1,71 +1,107 @@
-import { v4 as uuid } from "uuid";
+import { EngineCoordinator } from "..";
+import { MainToWorkerMessage, WorkerToMainMessage } from "../workers/types";
+import { MediaClipProperty } from "./clip";
 
-class Clip {
-  protected _id: string;
-  protected _start: number = 0;
-  protected _sourceStart: number = 0;
-  protected _sourceEnd: number = 0;
-
-  constructor() {
-    this._id = uuid();
-  }
-
-  public get sourceStart(): number {
-    return this._sourceStart;
-  }
-  public set sourceStart(value: number) {
-    this._sourceStart = value;
-  }
-  protected get sourceEnd(): number {
-    return this._sourceEnd;
-  }
-  protected set sourceEnd(value: number) {
-    this._sourceEnd = value;
-  }
-  public get start(): number {
-    return this._start;
-  }
-  public set start(value: number) {
-    this._start = value;
-  }
-  public get id(): string {
-    return this._id;
-  }
-  public set id(value: string) {
-    this._id = value;
-  }
-}
-
-type ClipOptionsType = {
-  start?: number;
-  sourceStart?: number;
-  sourceEnd?: number;
-  width?: number;
-  height?: number;
-  scaleX?: number;
-  scaleY?: number;
-  opacity?: number;
-  x?: number;
-  y?: number;
+type AddVideoSourceParams = {
+  id: string;
+  inputSource: File | string;
+  proxySource?: File | string;
 };
 
-export class VideoClip extends Clip {
-  private _source: any;
+type SendToWorkerAndWaitCallBack = (
+  data: MainToWorkerMessage,
+) => Promise<WorkerToMainMessage>;
 
-  constructor(source: any, options?: ClipOptionsType) {
-    super();
-    this._source = source;
-    // get default time of source
-    this._start = options?.start ?? 0;
-    this._sourceEnd = options?.sourceEnd ?? 0;
-    this._sourceStart = options?.sourceStart ?? 0;
+export class CoreManager {
+  private _engine: EngineCoordinator;
+
+  private _sendToWorkerAndWait: SendToWorkerAndWaitCallBack;
+
+  constructor(
+    engine: EngineCoordinator,
+    sendToWorkerAndWait: SendToWorkerAndWaitCallBack,
+  ) {
+    this._engine = engine;
+    this._sendToWorkerAndWait = sendToWorkerAndWait.bind(engine);
   }
 
-  public get source(): any {
-    return this._source;
+  public async addVideoSource({
+    id,
+    inputSource,
+    proxySource,
+  }: AddVideoSourceParams) {
+    if (!this._engine.isInit) {
+      throw new Error("Please init the engine first!");
+    }
+    const response = await this._sendToWorkerAndWait({
+      type: "ADD_VIDEO_SOURCE",
+      id: id,
+      inputSource: inputSource,
+      proxySource: proxySource,
+    });
+
+    if (response.type === "FINISH_ADD_VIDEO_SOURCE") {
+      return response.data!;
+    } else {
+      throw new Error("Something went wrong to worker!");
+    }
   }
+
+  public async addVideoTrack({ id }: { id: string }) {
+    if (!this._engine.isInit) {
+      throw new Error("Please init the engine first!");
+    }
+    const response = await this._sendToWorkerAndWait({
+      type: "ADD_VIDEO_TRACK",
+      id: id,
+    });
+
+    if (response.type === "FINISH_ADD_VIDEO_TRACK") {
+      return Object.freeze(response.data!);
+    } else {
+      throw new Error("Something went wrong to worker!");
+    }
+  }
+
+  public async addVideoClip({
+    id,
+    trackId,
+    sourceId,
+    start,
+    sourceStart,
+    duration,
+    property,
+  }: {
+    id: string;
+    trackId: string;
+    sourceId: string;
+    start: number;
+    sourceStart: number;
+    duration: number;
+    property?: Partial<MediaClipProperty>;
+  }) {
+    if (!this._engine.isInit) {
+      throw new Error("Please init the engine first!");
+    }
+    const response = await this._sendToWorkerAndWait({
+      type: "ADD_VIDEO_CLIP",
+      id: id,
+      trackId: trackId,
+      sourceId: sourceId,
+      start: start,
+      sourceStart: sourceStart,
+      duration: duration,
+      property: property,
+    });
+
+    if (response.type === "FINISH_ADD_VIDEO_CLIP") {
+      return Object.freeze(response.data!);
+    } else {
+      throw new Error("Something went wrong to worker!");
+    }
+  }
+
+  //   public async clear({includeSources}: {includeSources?: boolean}) {
+
+  //   }
 }
-
-export const coreManager = {
-  VideoClip: VideoClip,
-};

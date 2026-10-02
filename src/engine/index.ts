@@ -7,6 +7,8 @@ import {
   WorkerToMainMessage,
   WrappedMainToWorkerMessage,
 } from "./workers/types";
+import { MediaClipProperty } from "./core-manager/clip";
+import { CoreManager } from "./core-manager";
 
 type CoordinateEvents = {
   "playback:time-update": number;
@@ -30,7 +32,8 @@ type WorkerResponseCallback = (
   value: WorkerToMainMessage | PromiseLike<WorkerToMainMessage>,
 ) => void;
 
-class EngineCoordinator {
+export class EngineCoordinator {
+  private _init: boolean = false;
   private _playHeadAnimId: number | null = null;
   private _duration: number = 10;
   private _width: number = 1920;
@@ -44,6 +47,7 @@ class EngineCoordinator {
   private _WORKER_URL = new URL("./workers/engine.worker.ts", import.meta.url);
   private _pendingWorkerRequests: Map<string, WorkerResponseCallback> =
     new Map();
+  private _coreManager: CoreManager;
 
   constructor() {
     this._unsubFSM?.();
@@ -54,6 +58,7 @@ class EngineCoordinator {
         this._handleVisibilityChange,
       );
     }
+    this._coreManager = new CoreManager(this, this._sendToWorkerAndWait);
   }
 
   public init(
@@ -91,6 +96,9 @@ class EngineCoordinator {
   }
 
   public play(): boolean {
+    if (!this._init) {
+      throw new Error("Please init the engine first!");
+    }
     if (masterClock.getCurrentTime() >= this._duration) {
       this.seek(0);
     }
@@ -98,6 +106,9 @@ class EngineCoordinator {
   }
 
   public pause(): boolean {
+    if (!this._init) {
+      throw new Error("Please init the engine first!");
+    }
     return playbackMachine.send("PAUSE");
   }
 
@@ -107,6 +118,9 @@ class EngineCoordinator {
   }
 
   public seek(targetTime: number) {
+    if (!this._init) {
+      throw new Error("Please init the engine first!");
+    }
     const clampedTime = Math.max(0, Math.min(targetTime, this._duration));
     masterClock.seek(clampedTime);
     this.pub("playback:time-update", clampedTime);
@@ -130,10 +144,16 @@ class EngineCoordinator {
   }
 
   public startScrub(): boolean {
+    if (!this._init) {
+      throw new Error("Please init the engine first!");
+    }
     return playbackMachine.send("START_SCRUB");
   }
 
   public scrub(targetTime: number) {
+    if (!this._init) {
+      throw new Error("Please init the engine first!");
+    }
     if (playbackMachine.currentState !== "SCRUBBING") return;
 
     const clampedTime = Math.max(0, Math.min(targetTime, this._duration));
@@ -147,6 +167,9 @@ class EngineCoordinator {
   }
 
   public endScrub(finalTime?: number) {
+    if (!this._init) {
+      throw new Error("Please init the engine first!");
+    }
     const target = finalTime ?? masterClock.getCurrentTime();
     playbackMachine.send("END_SCRUB");
     this._sendToWorker({
@@ -182,6 +205,7 @@ class EngineCoordinator {
     await masterClock.destroy();
     this._stopPlayHeadLoop();
     this._listeners.clear();
+    this._init = false;
     if (this._worker) {
       this._worker.terminate();
       this._worker = null;
@@ -242,6 +266,9 @@ class EngineCoordinator {
     const response = await new Promise<WorkerToMainMessage>((r) => {
       this._pendingWorkerRequests.set(requestId, r);
     });
+    if (response.status === "failed") {
+      throw new Error(response.errorMsg);
+    }
     return response;
   }
 
@@ -318,6 +345,7 @@ class EngineCoordinator {
         break;
       case "INIT_COMPLETED":
         this.pub("playback:end-init");
+        this._init = true;
         break;
       case "SEEK_RESOLVED":
         playbackMachine.send("SEEK_RESOLVED");
@@ -336,29 +364,8 @@ class EngineCoordinator {
 
   // ---------------------- Public api data ---------
 
-  // add track only
-  public add() {}
-
-  public async addVideoSource({
-    id,
-    inputSource,
-    proxySource,
-  }: AddVideoSourceParams) {
-    const response = await this._sendToWorkerAndWait({
-      type: "SOURCE_VIDEO_ADD",
-      id: id,
-      inputSource: inputSource,
-      proxySource: proxySource,
-    });
-
-    if (response.type === "SOURCE_VIDEO_ADD_FINISHED") {
-      if (response.status === "failed") {
-        throw new Error(response.errorMsg);
-      }
-      return response.data;
-    } else {
-      throw new Error("Something went wrong to worker!");
-    }
+  public get core() {
+    return this._coreManager;
   }
 
   public get width() {
@@ -375,6 +382,10 @@ class EngineCoordinator {
 
   public get version() {
     return this._version;
+  }
+
+  public get isInit() {
+    return this._init;
   }
 }
 
