@@ -9,10 +9,13 @@ import { WrappedMainToWorkerMessage } from "./types";
 import { sendToMain } from "./util";
 
 import { Text, TextStyle } from "pixi.js";
+import { trackManager } from "./manager/track-manager";
 
 let taskQueue = Promise.resolve();
 
-const playbackController = new PlaybackController((currentTime: number) => {});
+const playbackController = new PlaybackController((currentTime: number) => {
+  trackManager.renderAt(currentTime);
+});
 
 self.onmessage = (e: MessageEvent<WrappedMainToWorkerMessage>) => {
   taskQueue.then(async () => {

@@ -1,28 +1,20 @@
-import { Builder } from "builder-pattern";
-import { VideoTrackPreview, VideoTrackWorker } from "../../core-manager/track";
 import { VideoClipPreview, VideoClipWorker } from "../../core-manager/clip";
+import { VideoTrackPreview, VideoTrackWorker } from "../../core-manager/track";
 import { sourceManager } from "./source-manager";
 
-export class TrackDataManager {
+export class TrackManager {
   private _videoTracks: Map<string, VideoTrackWorker> = new Map();
   private _trackOrders: string[] = [];
 
   public addVideoTrack(id: string): VideoTrackWorker {
-    const track = Builder<VideoTrackWorker>()
-      .id(id)
-      .clips(new Map())
-      .clipWorkers(new Map())
-      .muted(false)
-      .visible(false)
-      .clipOrders([])
-      .build();
+    const track = new VideoTrackWorker(id);
     this._videoTracks.set(id, track);
     this._trackOrders.push(id);
 
     return track;
   }
 
-  public addVideoClip(clip: VideoClipWorker, id: string) {
+  public async addVideoClip(clip: VideoClipWorker, id: string) {
     const track = this._videoTracks.get(id);
     if (!track) {
       throw new Error("Not found video track");
@@ -30,36 +22,24 @@ export class TrackDataManager {
     if (!sourceManager.getVideoSource(clip.sourceId)) {
       throw new Error("Not found source");
     }
-    track.clipWorkers.set(clip.id, clip);
+    await track.addClip(clip);
+  }
 
-    let sortedClips = Array.from(track.clipWorkers.values()).sort(
-      (a, b) => a.start - b.start,
+  public async renderAt(currentTime: number) {
+    await Promise.all(
+      Array.from(this._videoTracks.values()).map((t) =>
+        t.renderAt(currentTime),
+      ),
     );
-
-    for (let i = 1; i < sortedClips.length; i++) {
-      let prevClip = sortedClips[i - 1];
-      let currentClip = sortedClips[i];
-
-      let prevEnd = prevClip.start + prevClip.duration;
-
-      if (currentClip.start < prevEnd) {
-        currentClip.start = prevEnd;
-
-        track.clipWorkers.set(currentClip.id, currentClip);
-      }
-    }
-
-    track.clipOrders = sortedClips.map((c) => c.id);
   }
 
   static toVideoTrackPreview(videoTrack: VideoTrackWorker): VideoTrackPreview {
-    const { clipOrders, clipWorkers, ...rest } = videoTrack;
-    return { ...rest };
+    return { id: videoTrack.id };
   }
 
   static toVideoClipPreview(videoClip: VideoClipWorker): VideoClipPreview {
-    return { ...videoClip };
+    return { id: videoClip.id };
   }
 }
 
-export const trackDataManager = new TrackDataManager();
+export const trackManager = new TrackManager();

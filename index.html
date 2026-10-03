@@ -62,8 +62,8 @@
         const videoClip = await engine.core.addVideoClip({
           id: "video-clip-id",
           start: 0,
-          sourceStart: 10,
-          duration: 10,
+          sourceStart: 70,
+          duration: 21,
           trackId: videoTrack.id,
           sourceId: source.id,
           property: {
@@ -73,7 +73,7 @@
         console.log(source);
         console.log(videoTrack);
         console.log(videoClip);
-        // engine.togglePlay();
+        engine.togglePlay();
 
         // ---------------------------------------------
         // const tempInput = document.createElement("input");

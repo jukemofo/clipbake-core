@@ -23,4 +23,6 @@ export async function init(
     height: height,
     background: backgroundColor ?? "#000000",
   });
+
+  app.start();
 }

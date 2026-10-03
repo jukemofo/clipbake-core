@@ -53,7 +53,10 @@
 //     // Giữ cho queue luôn đầy (nhưng không vượt quá poolSize)
 //     while (this._queue.length < 3 && this._iterator) {
 //       const result = await this._iterator.next();
-//       if (result.done || !result.value) break;
+//       if (result.done || !result.value) {
+// this._isEndOfClip = true;
+// break;
+// }
 
 //       this._queue.push(result.value);
 // if (this.isStarving && this._queue.length >= BUFFER_THRESHOLD) {

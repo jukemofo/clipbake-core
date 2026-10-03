@@ -1,4 +1,4 @@
-import { TrackDataManager, trackDataManager } from "../manager/track-manager";
+import { TrackManager, trackManager } from "../manager/track-manager";
 import { AddVideoClipMessage } from "../types";
 import { sendToMain } from "../util";
 import { VideoClipWorker } from "../../core-manager/clip";
@@ -9,15 +9,15 @@ export async function addVideoClip(
 ) {
   try {
     const { trackId, type, ...rest } = msg;
-    const clip: VideoClipWorker = {
-      ...rest,
-      property: msg.property ?? {},
-    };
-    trackDataManager.addVideoClip(clip, trackId);
+    const clip = new VideoClipWorker(rest.id, rest.sourceId);
+    clip.sourceStart = rest.sourceStart;
+    clip.start = rest.start;
+    clip.duration = rest.duration;
+    await trackManager.addVideoClip(clip, trackId);
     sendToMain({
       type: "FINISH_ADD_VIDEO_CLIP",
       status: "success",
-      data: TrackDataManager.toVideoClipPreview(clip),
+      data: TrackManager.toVideoClipPreview(clip),
       requestId,
     });
   } catch (e) {
