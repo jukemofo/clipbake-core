@@ -1,5 +1,7 @@
 import { WrappedCanvas } from "mediabunny";
 import { sourceManager } from "../workers/manager/source-manager";
+import { tl } from "../workers/manager/animation-manager";
+import { app } from "../workers/canvas";
 
 export interface MediaClipProperty {
   width: number;
@@ -45,6 +47,9 @@ export class VideoClipWorker {
       Math.min(startSourceTime, end),
       end,
     );
+    this._property.x = app!.screen.width / 2;
+    this._property.y = app!.screen.height / 2;
+    // tl.to(this._property, { x: 10, duration: 0.4 }, this._start + 2);
   }
 
   public async clear() {
@@ -85,5 +90,9 @@ export class VideoClipWorker {
 
   public get iterator() {
     return this._iterator;
+  }
+
+  public get property() {
+    return this._property;
   }
 }

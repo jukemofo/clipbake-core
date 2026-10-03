@@ -1,5 +1,3 @@
-import { app, init } from "./canvas";
-import { SourceManager, sourceManager } from "./manager/source-manager";
 import { addVideoClip } from "./handle-case/add-video-clip";
 import { addVideoSource } from "./handle-case/add-video-source";
 import { addVideoTrack } from "./handle-case/add-video-track";
@@ -8,12 +6,14 @@ import { PlaybackController } from "./render/playback-controller";
 import { WrappedMainToWorkerMessage } from "./types";
 import { sendToMain } from "./util";
 
-import { Text, TextStyle } from "pixi.js";
 import { trackManager } from "./manager/track-manager";
+import { tl } from "./manager/animation-manager";
 
 let taskQueue = Promise.resolve();
 
 const playbackController = new PlaybackController((currentTime: number) => {
+  const isStarving = trackManager.isStarving();
+  tl.seek(currentTime);
   trackManager.renderAt(currentTime);
 });
 

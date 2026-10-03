@@ -8,6 +8,7 @@ import {
 import { sourceManager } from "../workers/manager/source-manager";
 import { CanvasSource, Sprite, Texture } from "pixi.js";
 import { app } from "../workers/canvas";
+import { tl } from "../workers/manager/animation-manager";
 
 export interface VideoTrackPreview {
   id: string;
@@ -40,8 +41,10 @@ export class VideoTrackWorker {
     });
     this._texture.dynamic = true;
     this._sprite = new Sprite(this._texture);
+    // TODO: fix this
+    tl.to(this._sprite, { x: 10, duration: 5 }, 2);
+
     app!.stage.addChild(this._sprite);
-    this._texture.source.update();
   }
 
   public get id(): string {
@@ -72,21 +75,18 @@ export class VideoTrackWorker {
     // load here
   }
 
-  public isStaring() {
+  public isStarving() {
     if (!this._currentClip) {
       return false;
     }
-    // if (this._isEndOfClip) return false;
-    // if (this._queue.length < MIN_BUFFER_SIZE) {
-    //   // buffer here
-    //   return true;
-    // }
-
+    if (this._isEndOfClip) return false;
+    if (this._queue.length < MIN_BUFFER_SIZE) {
+      return true;
+    }
     return false;
   }
 
   public async renderAt(currentTime: number) {
-    console.log(this._isEndOfClip, this._isBuffering);
     let currentClip = null;
     for (const id of this._clipOrders) {
       const clip = this._clipWorkers.get(id);
@@ -123,6 +123,10 @@ export class VideoTrackWorker {
       this._currentClip = currentClip;
       this._currentClip.load(currentSourceTime);
       this._isEndOfClip = false;
+      this._sprite.scale.set(1, 1);
+      this._sprite.anchor.set(0.5, 0.5);
+      this._sprite.x = this._currentClip.property.x!;
+      this._sprite.y = this._currentClip.property.y!;
     }
 
     if (this._queue.length <= 0) {
@@ -130,33 +134,61 @@ export class VideoTrackWorker {
       return;
     }
 
+    let latestValidFrame = null;
+
     while (
       this._queue.length > 0 &&
       currentSourceTime >= this._queue[0].timestamp
     ) {
-      const canvas = this._queue.shift()?.canvas;
-      this._textureCanvas.width = canvas?.width ?? this._textureCanvas.width;
-      this._textureCanvas.height = canvas?.height ?? this._textureCanvas.height;
-
-      // apply scale or something to this
-      this._sprite.width = app!.screen.width;
-      this._sprite.height = app!.screen.height;
-
-      const ctx = this._textureCanvas.getContext("2d");
-      if (canvas) {
-        ctx?.drawImage(
-          canvas,
-          0,
-          0,
-          this._textureCanvas.width,
-          this._textureCanvas.height,
-        );
-      } else {
-        ctx?.clearRect(0, 0, this._sprite.width, this._sprite.height);
-      }
-      this._texture.source.update();
+      latestValidFrame = this._queue.shift();
       this._fillBuffer();
     }
+
+    if (latestValidFrame) {
+      const canvas = latestValidFrame.canvas;
+
+      if (canvas) {
+        this._sprite.texture = this._texture;
+        this._texture.source.resource = canvas;
+        this._texture.source.resize(canvas.width, canvas.height);
+        this._texture.source.update();
+      } else {
+        this._sprite.texture = Texture.EMPTY;
+      }
+    }
+
+    // while (
+    //   this._queue.length > 0 &&
+    //   currentSourceTime >= this._queue[0].timestamp
+    // ) {
+    //   this._sprite.scale.set(1, 1);
+    //   const canvas = this._queue.shift()?.canvas;
+    //   this._fillBuffer();
+    //   const width = canvas?.width ?? this._textureCanvas.width;
+    //   const height = canvas?.height ?? this._textureCanvas.height;
+    //   this._textureCanvas.width = width;
+    //   this._textureCanvas.height = height;
+
+    //   this._sprite.anchor.x = 0.5;
+    //   this._sprite.anchor.y = 0.5;
+    //   this._sprite.x = this._currentClip.property.x!;
+    //   this._sprite.y = this._currentClip.property.y!;
+    //   const ctx = this._textureCanvas.getContext("2d");
+    //   if (canvas) {
+    //     ctx?.drawImage(
+    //       canvas,
+    //       0,
+    //       0,
+    //       this._textureCanvas.width,
+    //       this._textureCanvas.height,
+    //     );
+    //   } else {
+    //     ctx?.clearRect(0, 0, this._sprite.width, this._sprite.height);
+    //   }
+    //   this._texture.source.update();
+
+    //   this._texture.update();
+    // }
   }
 
   private async _fillBuffer() {

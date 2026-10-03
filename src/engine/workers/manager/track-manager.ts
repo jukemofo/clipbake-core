@@ -33,6 +33,10 @@ export class TrackManager {
     );
   }
 
+  public isStarving() {
+    return Array.from(this._videoTracks.values()).some((t) => t.isStarving());
+  }
+
   static toVideoTrackPreview(videoTrack: VideoTrackWorker): VideoTrackPreview {
     return { id: videoTrack.id };
   }
