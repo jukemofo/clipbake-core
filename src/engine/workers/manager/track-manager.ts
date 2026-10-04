@@ -1,13 +1,16 @@
 import { VideoClipPreview, VideoClipWorker } from "../../core-manager/clip";
-import { VideoTrackPreview, VideoTrackWorker } from "../../core-manager/track";
+import {
+  VideoTrack,
+  VideoTrackWorkerDeprecated,
+} from "../../core-manager/track";
 import { sourceManager } from "./source-manager";
 
 export class TrackManager {
-  private _videoTracks: Map<string, VideoTrackWorker> = new Map();
+  private _videoTracks: Map<string, VideoTrackWorkerDeprecated> = new Map();
   private _trackOrders: string[] = [];
 
-  public addVideoTrack(id: string): VideoTrackWorker {
-    const track = new VideoTrackWorker(id);
+  public addVideoTrack(id: string): VideoTrackWorkerDeprecated {
+    const track = new VideoTrackWorkerDeprecated(id);
     this._videoTracks.set(id, track);
     this._trackOrders.push(id);
 
@@ -33,11 +36,21 @@ export class TrackManager {
     );
   }
 
+  public async seek(targetTime: number, highQuality: boolean) {
+    await Promise.all(
+      Array.from(this._videoTracks.values()).map((t) =>
+        t.seek(targetTime, highQuality),
+      ),
+    );
+  }
+
   public isStarving() {
     return Array.from(this._videoTracks.values()).some((t) => t.isStarving());
   }
 
-  static toVideoTrackPreview(videoTrack: VideoTrackWorker): VideoTrackPreview {
+  static toVideoTrackPreview(
+    videoTrack: VideoTrackWorkerDeprecated,
+  ): VideoTrack {
     return { id: videoTrack.id };
   }
 

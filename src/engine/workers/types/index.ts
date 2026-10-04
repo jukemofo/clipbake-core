@@ -1,6 +1,6 @@
 import { MediaClipProperty, VideoClipPreview } from "../../core-manager/clip";
-import { VideoSourcePreview } from "../../core-manager/source";
-import { VideoTrackPreview } from "../../core-manager/track";
+import { VideoSource } from "../../core-manager/source";
+import { VideoTrack } from "../../core-manager/track";
 
 export type InitMessage = {
   type: "INIT";
@@ -44,6 +44,7 @@ export type AddVideoClipMessage = {
   sourceStart: number;
   duration: number;
   property?: Partial<MediaClipProperty>;
+  currentTime: number;
 };
 
 export type MainToWorkerMessage =
@@ -96,14 +97,14 @@ export type WorkerToMainMessage =
     }
   | {
       type: "FINISH_ADD_VIDEO_SOURCE";
-      data?: VideoSourcePreview;
+      data?: VideoSource;
       status: StatusType;
       errorMsg?: string;
       requestId: string;
     }
   | {
       type: "FINISH_ADD_VIDEO_TRACK";
-      data?: VideoTrackPreview;
+      data?: VideoTrack;
       status: StatusType;
       errorMsg?: string;
       requestId: string;

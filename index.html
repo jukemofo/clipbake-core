@@ -9,12 +9,27 @@
     <div class="flex flex-col gap-y-2 w-full h-full container p-4">
       <div class="flex flex-col gap-y-4 items-start">
         <h1>🎬 Clipbake Core Playground</h1>
-        <button
-          id="playBtn"
-          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-        >
-          Play Video
-        </button>
+        <div class="flex items-center gap-x-4">
+          <button
+            id="loadBtn"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+          >
+            Load Video
+          </button>
+          <button
+            id="playBtn"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+          >
+            Play Video
+          </button>
+
+          <button
+            id="seekBtn"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+          >
+            Seek at 10
+          </button>
+        </div>
         <p id="time">0.00</p>
       </div>
 
@@ -28,6 +43,8 @@
     <script type="module">
       import { engine } from "./src/index.ts";
       const btn = document.getElementById("playBtn");
+      const loadBtn = document.getElementById("loadBtn");
+      const btnSeek = document.getElementById("seekBtn");
       const time = document.getElementById("time");
       const canvas = document.getElementById("canvas");
       let isAdded = false;
@@ -36,14 +53,8 @@
       engine.sub("playback:time-update", (data) => {
         time.innerHTML = data.toFixed(3);
       });
-      btn.onclick = async () => {
-        // const url =
-        //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/How%20To%20Animate%20Your%20Own%20Custom%20Characters%20in%20Premiere%20Pro!%20-%20finzar%20(1080p%2C%20h264).mp4";
-        // const audio =
-        //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/sabrina.mp3";
-        // const img =
-        //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/next.png";
 
+      loadBtn.onclick = async () => {
         if (!isAdded) {
           const video = "preview.mp4";
           // const audio = "5-way.mp3";
@@ -71,17 +82,31 @@
             property: {},
           });
 
-          // const videoClip2 = await engine.core.addVideoClip({
-          //   id: "video-clip-id-2",
-          //   start: 1,
-          //   sourceStart: 184,
-          //   duration: 15,
-          //   trackId: videoTrack.id,
-          //   sourceId: source.id,
-          //   property: {},
-          // });
+          const videoClip2 = await engine.core.addVideoClip({
+            id: "video-clip-id-2",
+            start: 0,
+            sourceStart: 190,
+            duration: 15,
+            trackId: videoTrack.id,
+            sourceId: source.id,
+            property: {},
+          });
           isAdded = true;
         }
+        console.log("done");
+      };
+
+      btnSeek.onclick = async () => {
+        engine.seek(3);
+      };
+
+      btn.onclick = async () => {
+        // const url =
+        //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/How%20To%20Animate%20Your%20Own%20Custom%20Characters%20in%20Premiere%20Pro!%20-%20finzar%20(1080p%2C%20h264).mp4";
+        // const audio =
+        //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/sabrina.mp3";
+        // const img =
+        //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/next.png";
 
         engine.togglePlay();
 

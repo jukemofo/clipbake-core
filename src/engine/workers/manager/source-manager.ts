@@ -1,8 +1,5 @@
 import { Builder } from "builder-pattern";
-import {
-  VideoSourcePreview,
-  VideoSourceWorker,
-} from "../../core-manager/source";
+import { VideoSource, VideoSourceWorker } from "../../core-manager/source";
 import {
   ALL_FORMATS,
   AudioBufferSink,
@@ -113,9 +110,7 @@ export class SourceManager {
     return { vidTrack, audTrack, vidSink, audSink };
   }
 
-  static toVideoSourcePreview(
-    videoSource: VideoSourceWorker,
-  ): VideoSourcePreview {
+  static toVideoSourcePreview(videoSource: VideoSourceWorker): VideoSource {
     const {
       vidSink,
       audSink,

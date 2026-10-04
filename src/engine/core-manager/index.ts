@@ -1,4 +1,5 @@
 import { EngineCoordinator } from "..";
+import { masterClock } from "../master-clock";
 import { MainToWorkerMessage, WorkerToMainMessage } from "../workers/types";
 import { MediaClipProperty } from "./clip";
 
@@ -92,6 +93,7 @@ export class CoreManager {
       sourceStart: sourceStart,
       duration: duration,
       property: property,
+      currentTime: masterClock.getCurrentTime(),
     });
 
     if (response.type === "FINISH_ADD_VIDEO_CLIP") {

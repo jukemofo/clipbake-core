@@ -1,4 +1,5 @@
 import { v4 as uuid } from "uuid";
+import { CoreManager } from "./core-manager";
 import { masterClock } from "./master-clock";
 import { playbackMachine } from "./playback-state-machine";
 import { PlaybackState } from "./playback-state-machine/types";
@@ -7,8 +8,6 @@ import {
   WorkerToMainMessage,
   WrappedMainToWorkerMessage,
 } from "./workers/types";
-import { MediaClipProperty } from "./core-manager/clip";
-import { CoreManager } from "./core-manager";
 
 type CoordinateEvents = {
   "playback:time-update": number;
@@ -22,12 +21,6 @@ type CoordinateEvents = {
 
 type FPS_TYPE = 24 | 30 | 60;
 
-type AddVideoSourceParams = {
-  id: string;
-  inputSource: File | string;
-  proxySource?: File | string;
-};
-
 type WorkerResponseCallback = (
   value: WorkerToMainMessage | PromiseLike<WorkerToMainMessage>,
 ) => void;
@@ -35,7 +28,7 @@ type WorkerResponseCallback = (
 export class EngineCoordinator {
   private _init: boolean = false;
   private _playHeadAnimId: number | null = null;
-  private _duration: number = 50;
+  private _duration: number = 10;
   private _width: number = 1920;
   private _height: number = 1080;
   private _backgroundColor: string = "#000000";
@@ -125,22 +118,12 @@ export class EngineCoordinator {
     masterClock.seek(clampedTime);
     this.pub("playback:time-update", clampedTime);
 
-    const isPlaying = playbackMachine.currentState === "PLAYING";
-
-    if (isPlaying) {
-      this._sendToWorker({
-        type: "PLAY",
-        startTime: clampedTime,
-        basePerfTime: performance.now(),
-      });
-    } else {
-      playbackMachine.send("SEEK_START");
-      this._sendToWorker({
-        type: "SEEK",
-        time: clampedTime,
-        highQuality: true,
-      });
-    }
+    playbackMachine.send("SEEK_START");
+    this._sendToWorker({
+      type: "SEEK",
+      time: clampedTime,
+      highQuality: true,
+    });
   }
 
   public startScrub(): boolean {
@@ -287,6 +270,7 @@ export class EngineCoordinator {
 
   // Main logic goes here
   private _handleStateChange = (nextState: PlaybackState) => {
+    console.log(nextState);
     switch (nextState) {
       case "PLAYING": {
         masterClock.play();
@@ -304,7 +288,6 @@ export class EngineCoordinator {
       case "PAUSED": {
         masterClock.pause();
         const pauseTime = masterClock.getCurrentTime();
-
         this._sendToWorker({
           type: "PAUSE",
           time: pauseTime,
@@ -327,10 +310,6 @@ export class EngineCoordinator {
       case "SEEKING":
       case "EXPORTING":
         masterClock.pause();
-        this._sendToWorker({
-          type: "PAUSE",
-          time: masterClock.getCurrentTime(),
-        });
         this._stopPlayHeadLoop();
         break;
     }

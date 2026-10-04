@@ -7,7 +7,7 @@ import {
 import { nanoid } from "nanoid";
 import { getImageDimensions } from "../workers/util/img";
 
-export interface VideoSourcePreview {
+export interface VideoSource {
   id: string;
   width: number;
   height: number;
@@ -17,7 +17,7 @@ export interface VideoSourcePreview {
   numberOfChannels?: number;
 }
 
-export interface VideoSourceWorker extends VideoSourcePreview {
+export interface VideoSourceWorker extends VideoSource {
   vidTrack: InputVideoTrack;
   vidSink: CanvasSink;
   audTrack?: InputAudioTrack | null;

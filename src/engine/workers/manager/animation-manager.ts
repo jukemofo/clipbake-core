@@ -1,3 +1,3 @@
 import { gsap } from "gsap";
 
-export const tl = gsap.timeline({ paused: true });
+export const masterTimeline = gsap.timeline({ paused: true });

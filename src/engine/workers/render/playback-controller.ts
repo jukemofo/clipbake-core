@@ -1,4 +1,8 @@
 export type TickCallback = (currentTime: number) => void;
+export type SeekCallback = (
+  targetTime: number,
+  highQuality: boolean,
+) => void | Promise<void>;
 
 export class PlaybackController {
   private _rafId: number | null = null;
@@ -7,9 +11,11 @@ export class PlaybackController {
   private _basePerfTime = 0;
   private _currentTime = 0;
   private _onTick: TickCallback;
+  private _onSeek: SeekCallback;
 
-  constructor(onTick: TickCallback) {
+  constructor(onTick: TickCallback, onSeek: SeekCallback) {
     this._onTick = onTick;
+    this._onSeek = onSeek;
   }
 
   public play(startTime: number, basePerfTime: number) {
@@ -34,6 +40,10 @@ export class PlaybackController {
       this._currentTime = pausedTime;
       this._onTick(this._currentTime);
     }
+  }
+
+  public async seek(seekedTime: number, highQuality: boolean) {
+    await this._onSeek(seekedTime, highQuality);
   }
 
   private _loop = () => {

@@ -6,16 +6,23 @@ import { PlaybackController } from "./render/playback-controller";
 import { WrappedMainToWorkerMessage } from "./types";
 import { sendToMain } from "./util";
 
-import { trackManager } from "./manager/track-manager";
-import { tl } from "./manager/animation-manager";
+import { masterTimeline } from "./manager/animation-manager";
+import { trackManagerV2 } from "./manager/track-manager-v2";
 
 let taskQueue = Promise.resolve();
 
-const playbackController = new PlaybackController((currentTime: number) => {
-  const isStarving = trackManager.isStarving();
-  tl.seek(currentTime);
-  trackManager.renderAt(currentTime);
-});
+const playbackController = new PlaybackController(
+  (currentTime: number) => {
+    const isStarving = trackManagerV2.isStarving();
+    masterTimeline.seek(currentTime);
+    trackManagerV2.renderAt(currentTime);
+  },
+  (targetTime: number, highQuality: boolean) => {
+    console.log("seek", targetTime);
+    masterTimeline.seek(targetTime);
+    trackManagerV2.seek(targetTime, highQuality);
+  },
+);
 
 self.onmessage = (e: MessageEvent<WrappedMainToWorkerMessage>) => {
   taskQueue.then(async () => {
@@ -35,6 +42,8 @@ self.onmessage = (e: MessageEvent<WrappedMainToWorkerMessage>) => {
         break;
       case "SEEK":
         const { time: seekedTime, highQuality } = restMessage;
+        playbackController.pause(seekedTime);
+        await playbackController.seek(seekedTime, highQuality);
         sendToMain({
           type: "SEEK_RESOLVED",
           time: seekedTime,
