@@ -11,18 +11,48 @@ import { trackManager } from "./manager/track-manager";
 
 let taskQueue = Promise.resolve();
 
+let isWaitingBuffer = false;
+let bufferCheckInterval: any = null;
+
+function checkBuffering() {
+  const isStarving = trackManager.isStarving();
+  if (isStarving) {
+    if (!isWaitingBuffer) {
+      isWaitingBuffer = true;
+
+      sendToMain({
+        requestId: "buffer-wait-id",
+        status: "success",
+        type: "BUFFER_WAIT",
+      });
+
+      bufferCheckInterval = setInterval(() => {
+        if (!trackManager.isStarving()) {
+          clearInterval(bufferCheckInterval);
+          bufferCheckInterval = null;
+          isWaitingBuffer = false;
+
+          sendToMain({
+            requestId: "buffer-resolved-id",
+            status: "success",
+            type: "BUFFER_RESOLVED",
+          });
+        }
+      }, 100);
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
 const playbackController = new PlaybackController({
   onTick: (currentTime: number) => {
-    const isStarving = trackManager.isStarving();
-    // find a way to implement send buffer-resolved
-    // if (isStarving) {
-    //   sendToMain({
-    //     requestId: "buffer-wait-id",
-    //     status: "success",
-    //     type: "BUFFER_WAIT",
-    //   });
-    //   return;
-    // }
+    const isBuffer = checkBuffering();
+    if (isBuffer) {
+      return;
+    }
     masterTimeline.seek(currentTime);
     trackManager.renderAt(currentTime);
   },

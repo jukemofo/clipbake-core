@@ -93,7 +93,9 @@ export class CoreManager {
     if (!this._engine.isInit) {
       throw new Error("Please init the engine first!");
     }
-    playbackMachine.send("PAUSE");
+    if (playbackMachine.currentState === "PLAYING") {
+      playbackMachine.send("PAUSE");
+    }
     const response = await this._sendToWorkerAndWait({
       type: "ADD_VIDEO_CLIP",
       id: id,

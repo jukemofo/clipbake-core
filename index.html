@@ -114,6 +114,14 @@
         durationDisplay.innerHTML = data.toFixed(3);
       });
 
+      engine.sub("playback:buffering", () => {
+        console.log("waiting...");
+      });
+
+      engine.sub("playback:buffer-resolved", () => {
+        console.log("resolved");
+      });
+
       btnClip.onclick = async () => {
         const videoClip = await engine.core.addVideoClip({
           id: "video-clip-id-8",
