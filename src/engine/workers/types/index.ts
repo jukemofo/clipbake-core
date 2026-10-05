@@ -1,4 +1,4 @@
-import { MediaClipProperty, VideoClipPreview } from "../../core-manager/clip";
+import { MediaClipProperty, VideoClip } from "../../core-manager/clip";
 import { VideoSource } from "../../core-manager/source";
 import { VideoTrack } from "../../core-manager/track";
 
@@ -111,7 +111,7 @@ export type WorkerToMainMessage =
     }
   | {
       type: "FINISH_ADD_VIDEO_CLIP";
-      data?: VideoClipPreview;
+      data?: VideoClip;
       status: StatusType;
       errorMsg?: string;
       requestId: string;

@@ -195,7 +195,7 @@ export class VideoClipRender {
   }
 
   public get sourceStart() {
-    return this._duration;
+    return this._sourceStart;
   }
 
   public set sourceStart(value: number) {

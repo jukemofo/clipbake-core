@@ -28,13 +28,13 @@ export async function addVideoClip(
       },
       keyframes: [],
     };
-    trackManager.addVideoClip(clip, trackId);
-    await trackManager.seek(currentTime, true);
+    const responseClip = trackManager.addVideoClip(clip, trackId);
+    await trackManager.seek(currentTime);
 
     sendToMain({
       type: "FINISH_ADD_VIDEO_CLIP",
       status: "success",
-      data: clip,
+      data: responseClip,
       requestId,
     });
   } catch (e) {

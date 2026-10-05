@@ -12,7 +12,7 @@ export async function addVideoTrack(
     sendToMain({
       type: "FINISH_ADD_VIDEO_TRACK",
       status: "success",
-      data: { id: track.id },
+      data: { id: track.id, clips: [] },
       requestId,
     });
   } catch (e) {

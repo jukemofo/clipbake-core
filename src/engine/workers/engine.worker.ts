@@ -28,7 +28,9 @@ const playbackController = new PlaybackController({
   },
   onSeek: (targetTime: number, highQuality: boolean) => {
     masterTimeline.seek(targetTime);
-    trackManager.seek(targetTime, highQuality);
+    if (highQuality) {
+      trackManager.seek(targetTime);
+    }
   },
 });
 

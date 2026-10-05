@@ -1,12 +1,8 @@
-import { WrappedCanvas } from "mediabunny";
-import { CanvasSource, Sprite, Texture } from "pixi.js";
-import { app } from "../workers/canvas";
-import { MIN_BUFFER_SIZE, POOL_SIZE } from "../workers/constant";
-import { VideoClipWorker } from "./clip";
-import { VideoTrackIterator } from "../workers/render/video-track-iterator";
+import { VideoClip } from "./clip";
 
 export interface VideoTrack {
   id: string;
+  clips: VideoClip[];
 }
 
 // export class VideoTrackWorkerDeprecated {

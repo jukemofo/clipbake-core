@@ -8,6 +8,7 @@ import {
   WorkerToMainMessage,
   WrappedMainToWorkerMessage,
 } from "./workers/types";
+import { AudioEngine } from "./audio-engine";
 
 type CoordinateEvents = {
   "playback:time-update": number;
@@ -41,6 +42,7 @@ export class EngineCoordinator {
   private _pendingWorkerRequests: Map<string, WorkerResponseCallback> =
     new Map();
   private _coreManager: CoreManager;
+  private _audioEngine: AudioEngine;
 
   constructor() {
     this._unsubFSM?.();
@@ -52,6 +54,7 @@ export class EngineCoordinator {
       );
     }
     this._coreManager = new CoreManager(this, this._sendToWorkerAndWait);
+    this._audioEngine = new AudioEngine(this._coreManager);
   }
 
   public init(
@@ -186,6 +189,7 @@ export class EngineCoordinator {
     this._unsubFSM?.();
     this._unsubFSM = null;
     await masterClock.destroy();
+    this._audioEngine.pause();
     this._stopPlayHeadLoop();
     this._listeners.clear();
     this._init = false;
@@ -193,6 +197,7 @@ export class EngineCoordinator {
       this._worker.terminate();
       this._worker = null;
     }
+    this._coreManager.close({ includeSources: true });
   }
 
   private pub<T extends keyof CoordinateEvents>(
@@ -282,6 +287,7 @@ export class EngineCoordinator {
           basePerfTime,
         });
         this._startPlayHeadLoop();
+        this._audioEngine.start();
         break;
       }
 
@@ -294,6 +300,7 @@ export class EngineCoordinator {
         });
 
         this._stopPlayHeadLoop();
+        this._audioEngine.pause();
         break;
       }
 
@@ -304,6 +311,7 @@ export class EngineCoordinator {
           time: masterClock.getCurrentTime(),
         });
         this._stopPlayHeadLoop();
+        this._audioEngine.pause();
         break;
 
       case "SCRUBBING":
@@ -311,6 +319,7 @@ export class EngineCoordinator {
       case "EXPORTING":
         masterClock.pause();
         this._stopPlayHeadLoop();
+        this._audioEngine.pause();
         break;
     }
   };

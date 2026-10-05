@@ -1,7 +1,10 @@
+import { AudioBufferSink } from "mediabunny";
 import { EngineCoordinator } from "..";
 import { masterClock } from "../master-clock";
 import { MainToWorkerMessage, WorkerToMainMessage } from "../workers/types";
 import { MediaClipProperty } from "./clip";
+import { VideoTrack } from "./track";
+import { sourceManager } from "../workers/manager/source-manager";
 
 type AddVideoSourceParams = {
   id: string;
@@ -15,7 +18,7 @@ type SendToWorkerAndWaitCallBack = (
 
 export class CoreManager {
   private _engine: EngineCoordinator;
-
+  private _videoTracks: Map<string, VideoTrack> = new Map();
   private _sendToWorkerAndWait: SendToWorkerAndWaitCallBack;
 
   constructor(
@@ -41,6 +44,8 @@ export class CoreManager {
       proxySource: proxySource,
     });
 
+    await sourceManager.addVideoSource({ id, inputSource, proxySource });
+
     if (response.type === "FINISH_ADD_VIDEO_SOURCE") {
       return response.data!;
     } else {
@@ -58,7 +63,9 @@ export class CoreManager {
     });
 
     if (response.type === "FINISH_ADD_VIDEO_TRACK") {
-      return Object.freeze(response.data!);
+      const result = response.data!;
+      this._videoTracks.set(id, result);
+      return result;
     } else {
       throw new Error("Something went wrong to worker!");
     }
@@ -97,13 +104,25 @@ export class CoreManager {
     });
 
     if (response.type === "FINISH_ADD_VIDEO_CLIP") {
-      return Object.freeze(response.data!);
+      const track = this._videoTracks.get(trackId);
+      if (!track) {
+        throw new Error("Not found track!");
+      }
+      const videoClip = Object.freeze(response.data!);
+      track.clips.push(videoClip);
+      track.clips.sort((a, b) => a.start - b.start);
+
+      return videoClip;
     } else {
       throw new Error("Something went wrong to worker!");
     }
   }
 
-  //   public async clear({includeSources}: {includeSources?: boolean}) {
+  public get videoTracks() {
+    return Object.freeze(this._videoTracks);
+  }
 
-  //   }
+  public async close({ includeSources }: { includeSources?: boolean }) {
+    this._videoTracks.clear();
+  }
 }

@@ -88,7 +88,7 @@ export class VideoTrackRender {
     this._renderProperty(activeSprite);
   }
 
-  public async seek(currentTime: number, highQuality: boolean) {
+  public async seek(currentTime: number) {
     this._sessionId += 1;
     const currentSession = this._sessionId;
     this._currentClip?.close();
@@ -163,6 +163,10 @@ export class VideoTrackRender {
 
   public isClipExisted(id: string) {
     return this._clips.find((c) => c.id === id);
+  }
+
+  public async close() {
+    await Promise.all(this._clips.map((c) => c.close()));
   }
 
   public get id() {
