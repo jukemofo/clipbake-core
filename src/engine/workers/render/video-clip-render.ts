@@ -209,4 +209,16 @@ export class VideoClipRender {
   public get isPrepared() {
     return this._isPrepared;
   }
+
+  public toRaw(): VideoClip {
+    return {
+      id: this._id,
+      duration: this._duration,
+      keyframes: [],
+      sourceId: this._sourceId,
+      sourceStart: this._sourceStart,
+      start: this._start,
+      property: { x: 0, y: 0, anchorX: 0, anchorY: 0, scaleX: 0, scaleY: 0 },
+    };
+  }
 }

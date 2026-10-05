@@ -111,7 +111,7 @@ export type WorkerToMainMessage =
     }
   | {
       type: "FINISH_ADD_VIDEO_CLIP";
-      data?: VideoClip;
+      data?: VideoClip[];
       status: StatusType;
       errorMsg?: string;
       requestId: string;

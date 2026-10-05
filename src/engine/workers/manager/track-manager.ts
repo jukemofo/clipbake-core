@@ -25,7 +25,7 @@ export class TrackManager {
     }
 
     if (track.isClipExisted(clip.id)) {
-      return clip;
+      return track.rawClips;
     }
 
     if (!sourceManager.getVideoSource(clip.sourceId)) {
@@ -33,11 +33,8 @@ export class TrackManager {
     }
     const renderClip = new VideoClipRender(clip);
     track.addClip(renderClip);
-    clip.start = renderClip.start;
-    clip.sourceStart = renderClip.sourceStart;
-    clip.duration = renderClip.duration;
 
-    return clip;
+    return track.rawClips;
   }
 
   public async renderAt(currentTime: number) {

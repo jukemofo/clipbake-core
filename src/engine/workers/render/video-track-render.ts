@@ -191,4 +191,8 @@ export class VideoTrackRender {
   public get id() {
     return this._id;
   }
+
+  public get rawClips() {
+    return this._clips.map((c) => c.toRaw());
+  }
 }

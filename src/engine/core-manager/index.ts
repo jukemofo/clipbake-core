@@ -5,6 +5,7 @@ import { MainToWorkerMessage, WorkerToMainMessage } from "../workers/types";
 import { MediaClipProperty } from "./clip";
 import { VideoTrack } from "./track";
 import { sourceManager } from "../workers/manager/source-manager";
+import { playbackMachine } from "../playback-state-machine";
 
 type AddVideoSourceParams = {
   id: string;
@@ -92,6 +93,7 @@ export class CoreManager {
     if (!this._engine.isInit) {
       throw new Error("Please init the engine first!");
     }
+    playbackMachine.send("PAUSE");
     const response = await this._sendToWorkerAndWait({
       type: "ADD_VIDEO_CLIP",
       id: id,
@@ -109,13 +111,12 @@ export class CoreManager {
       if (!track) {
         throw new Error("Not found track!");
       }
-      const videoClip = Object.freeze(response.data!);
-      track.clips.push(videoClip);
+      const videoClips = response.data!;
+      track.clips = videoClips;
       track.clips.sort((a, b) => a.start - b.start);
 
       this._engine.pub("playback:duration-update", this.duration);
-
-      return videoClip;
+      return track.clips.find((c) => c.id === id);
     } else {
       throw new Error("Something went wrong to worker!");
     }
