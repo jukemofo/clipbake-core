@@ -1,14 +1,13 @@
 import { Builder } from "builder-pattern";
-import { VideoSource, VideoSourceWorker } from "../../core-manager/source";
 import {
   ALL_FORMATS,
-  AudioBufferSink,
   BlobSource,
-  CanvasSink,
   Input,
+  InputAudioTrack,
+  InputVideoTrack,
   UrlSource,
 } from "mediabunny";
-import { POOL_SIZE } from "../constant";
+import { VideoSource, VideoSourceWorker } from "../../core-manager/source";
 
 type SourceParam = {
   id: string;
@@ -33,20 +32,21 @@ export class SourceManager {
       return existedSource;
     }
 
-    const { vidTrack, vidSink, audSink, audTrack } =
-      await this._loadTracksSinks(inputSource);
+    const { vidTrack, audTrack } = await this._loadTracksSinks(inputSource);
 
-    if (!vidTrack || !vidSink) {
+    if (!vidTrack) {
       throw new Error("Not found video track for this source");
     }
 
-    let proxyVidSink: CanvasSink | null = null;
-    let proxyAudSink: AudioBufferSink | null = null;
+    let proxyVidTrack: InputVideoTrack | null = null;
+    let proxyAudTrack: InputAudioTrack | null = null;
     if (proxySource) {
-      const { vidSink: extractedProxyVidSink, audSink: extractedProxyAudSink } =
-        await this._loadTracksSinks(proxySource);
-      proxyVidSink = extractedProxyVidSink;
-      proxyAudSink = extractedProxyAudSink;
+      const {
+        vidTrack: extractedProxyVidTrack,
+        audTrack: extractedProxyAudTrack,
+      } = await this._loadTracksSinks(proxySource);
+      proxyVidTrack = extractedProxyVidTrack;
+      proxyAudTrack = extractedProxyAudTrack;
     }
 
     const width = await vidTrack.getDisplayWidth();
@@ -66,11 +66,9 @@ export class SourceManager {
         .numberOfChannels(numberOfChannels)
         .sampleRate(sampleRate)
         .vidTrack(vidTrack)
-        .vidSink(vidSink)
         .audTrack(audTrack)
-        .audSink(audSink)
-        .proxyVidSink(proxyVidSink)
-        .proxyAudSink(proxyAudSink)
+        .proxyVidTrack(proxyVidTrack)
+        .proxyAudTrack(proxyAudTrack)
         .build(),
     );
 
@@ -90,36 +88,12 @@ export class SourceManager {
     const vidTrack = await input.getPrimaryVideoTrack();
     const audTrack = await input.getPrimaryAudioTrack();
 
-    let vidSink: CanvasSink | null = null;
-    let audSink: AudioBufferSink | null = null;
-
-    if (vidTrack) {
-      const videoCanBeTransparent = vidTrack
-        ? await vidTrack.canBeTransparent()
-        : false;
-      vidSink = new CanvasSink(vidTrack, {
-        alpha: videoCanBeTransparent,
-        poolSize: POOL_SIZE,
-      });
-    }
-
-    if (audTrack) {
-      audSink = new AudioBufferSink(audTrack);
-    }
-
-    return { vidTrack, audTrack, vidSink, audSink };
+    return { vidTrack, audTrack };
   }
 
   static toVideoSourcePreview(videoSource: VideoSourceWorker): VideoSource {
-    const {
-      vidSink,
-      audSink,
-      proxyAudSink,
-      proxyVidSink,
-      vidTrack,
-      audTrack,
-      ...rest
-    } = videoSource;
+    const { proxyAudTrack, proxyVidTrack, vidTrack, audTrack, ...rest } =
+      videoSource;
     return { ...rest };
   }
 

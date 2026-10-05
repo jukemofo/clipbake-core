@@ -5,34 +5,30 @@ import { VideoClipRender } from "./video-clip-render";
 export class VideoTrackRender {
   private _id: string;
   private _clips: VideoClipRender[] = [];
+  private _textureA: Texture;
+  private _textureB: Texture;
   private _spriteA: Sprite;
   private _spriteB: Sprite;
   private _activeSpriteLabel: "A" | "B";
   private _currentClip: VideoClipRender | null = null;
+  private _sessionId: number = 0;
 
   constructor(id: string) {
     this._id = id;
 
     this._activeSpriteLabel = "A";
-    const canvasA = new OffscreenCanvas(200, 200);
-    const canvasB = new OffscreenCanvas(200, 200);
-
-    this._spriteA = new Sprite(
-      new Texture({
-        source: new CanvasSource({ resource: canvasA }),
-      }),
-    );
-    this._spriteA.texture.dynamic = true;
-    this._spriteA.visible = false;
+    this._textureA = new Texture({
+      source: new CanvasSource({ resource: new OffscreenCanvas(200, 200) }),
+    });
+    this._spriteA = new Sprite(this._textureA);
+    this._textureA.dynamic = true;
     app!.stage.addChild(this._spriteA);
 
-    this._spriteB = new Sprite(
-      new Texture({
-        source: new CanvasSource({ resource: canvasB }),
-      }),
-    );
-    this._spriteB.texture.dynamic = true;
-    this._spriteB.visible = false;
+    this._textureB = new Texture({
+      source: new CanvasSource({ resource: new OffscreenCanvas(200, 200) }),
+    });
+    this._spriteB = new Sprite(this._textureB);
+    this._textureB.dynamic = true;
     app!.stage.addChild(this._spriteB);
   }
 
@@ -54,11 +50,10 @@ export class VideoTrackRender {
 
   public async renderAt(currentTime: number) {
     const clip = this._findCurrentClip(currentTime);
-    const nextClip = this._findCurrentClip(currentTime + 1.5);
+    const nextClip = this._findNearestClip(currentTime);
     let activeSprite = this._getActiveSprite();
-
     if (!clip) {
-      activeSprite.visible = false;
+      activeSprite.texture = Texture.EMPTY;
       return;
     }
 
@@ -70,9 +65,10 @@ export class VideoTrackRender {
       this._currentClip = clip;
     }
 
+    const wrapped = await clip.getFrame(currentTime);
     if (this._currentClip.id !== clip.id) {
       this._currentClip?.close();
-      activeSprite.visible = false;
+      activeSprite.texture = Texture.EMPTY;
       activeSprite.zIndex = 0;
       this._activeSpriteLabel = this._activeSpriteLabel === "A" ? "B" : "A";
       activeSprite = this._getActiveSprite();
@@ -80,26 +76,30 @@ export class VideoTrackRender {
       this._currentClip = clip;
     }
 
-    const wrapped = await clip.getFrame(currentTime);
     if (wrapped) {
-      activeSprite.scale.set(1, 1);
       const canvas = wrapped.canvas;
-      activeSprite.texture.source.resource = canvas;
-      activeSprite.texture.source.update();
-      activeSprite.updateCacheTexture();
+      const texture =
+        this._activeSpriteLabel === "A" ? this._textureA : this._textureB;
+      texture.source.resource = canvas;
+      activeSprite.texture = texture;
+      texture.source.update();
     }
 
     this._renderProperty(activeSprite);
-    activeSprite.visible = true;
   }
 
   public async seek(currentTime: number, highQuality: boolean) {
+    this._sessionId += 1;
+    const currentSession = this._sessionId;
     this._currentClip?.close();
     const clip = this._findCurrentClip(currentTime);
-    this._activeSpriteLabel = "A";
-    this._spriteA.visible = false;
-    this._spriteB.visible = false;
+    const nextClip = this._findNearestClip(currentTime);
+
     this._currentClip = clip;
+
+    if (nextClip && nextClip.id !== clip?.id) {
+      nextClip.prepare();
+    }
 
     if (!clip) {
       return;
@@ -107,12 +107,18 @@ export class VideoTrackRender {
 
     await clip.seek(currentTime);
     const wrapped = await clip.getFrame(currentTime);
+    if (currentSession !== this._sessionId) {
+      return;
+    }
+    this._activeSpriteLabel = "A";
+    this._spriteA.texture = Texture.EMPTY;
+    this._spriteB.texture = Texture.EMPTY;
     if (wrapped) {
-      this._spriteA.texture.source.resource = wrapped.canvas;
-      this._spriteA.texture.source.update();
+      this._textureA.source.resource = wrapped.canvas;
+      this._spriteA.texture = this._textureA;
+      this._textureA.source.update();
     }
     this._renderProperty(this._spriteA);
-    this._spriteA.visible = true;
   }
 
   private _findCurrentClip(currentTime: number) {
@@ -130,13 +136,33 @@ export class VideoTrackRender {
     return currentClip;
   }
 
+  private _findNearestClip(currentTime: number) {
+    let currentClip = null;
+    for (const clip of this._clips) {
+      if (clip.start > currentTime) {
+        currentClip = clip;
+        break;
+      }
+    }
+    return currentClip;
+  }
+
   private _getActiveSprite() {
     return this._activeSpriteLabel === "A" ? this._spriteA : this._spriteB;
   }
 
   private _renderProperty(sprite: Sprite) {
+    sprite.scale.set(1, 1);
     sprite.position.set(app!.screen.width / 2, app!.screen.height / 2);
     sprite.anchor.set(0.5, 0.5);
+  }
+
+  public isStarving() {
+    return this._currentClip?.isStarving();
+  }
+
+  public isClipExisted(id: string) {
+    return this._clips.find((c) => c.id === id);
   }
 
   public get id() {

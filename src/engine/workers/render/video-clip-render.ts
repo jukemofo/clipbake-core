@@ -1,4 +1,9 @@
-import { CanvasSink, InputVideoTrack, WrappedCanvas } from "mediabunny";
+import {
+  CanvasSink,
+  EncodedPacketSink,
+  InputVideoTrack,
+  WrappedCanvas,
+} from "mediabunny";
 import { VideoClip } from "../../core-manager/clip";
 import { MIN_BUFFER_SIZE, POOL_SIZE } from "../constant";
 import { sourceManager } from "../manager/source-manager";
@@ -12,6 +17,9 @@ export class VideoClipRender {
   private _sourceStart: number;
   private _duration: number;
   private _sink: CanvasSink | null = null;
+  private _packetSink: EncodedPacketSink | null = null;
+  private _canvasPacket: OffscreenCanvas | null = null;
+  private _videoDecoder: VideoDecoder | null = null;
   private _iterator: AsyncGenerator<WrappedCanvas, void, unknown> | null = null;
   private _sessionId: number = 0;
   private _queue: WrappedCanvas[];
@@ -55,6 +63,60 @@ export class VideoClipRender {
       this._refill();
     }
     return latestValidFrame;
+  }
+
+  public async scrub(targetTime: number): Promise<OffscreenCanvas | null> {
+    if (!this._packetSink) {
+      this._packetSink = new EncodedPacketSink(this._videoTrack);
+    }
+    if (!this._canvasPacket) {
+      this._canvasPacket = new OffscreenCanvas(200, 200);
+    }
+
+    if (!this._videoDecoder) {
+      this._videoDecoder = new VideoDecoder({
+        output: (frame) => {
+          if (!this._canvasPacket) return;
+
+          this._canvasPacket.width = frame.displayWidth;
+          this._canvasPacket.height = frame.displayHeight;
+
+          const ctx = this._canvasPacket.getContext("2d");
+          ctx!.drawImage(
+            frame,
+            0,
+            0,
+            this._canvasPacket.width,
+            this._canvasPacket.height,
+          );
+          frame.close();
+        },
+        error: (e) => {
+          console.error("Decoder error:", e);
+        },
+      });
+
+      const config = await this._videoTrack.getDecoderConfig();
+      this._videoDecoder.configure(config!);
+    }
+
+    const packet = await this._packetSink.getKeyPacket(targetTime);
+    if (!packet) return null;
+    const chunk = packet.toEncodedVideoChunk();
+
+    if (this._videoDecoder.decodeQueueSize > 2) {
+      this._videoDecoder.reset();
+      const config = await this._videoTrack.getDecoderConfig();
+      this._videoDecoder.configure(config!);
+    }
+
+    this._videoDecoder.decode(chunk);
+
+    try {
+      await this._videoDecoder.flush();
+    } catch (err) {}
+
+    return this._canvasPacket;
   }
 
   public async seek(targetTime: number) {
@@ -101,6 +163,12 @@ export class VideoClipRender {
     this._queue = [];
     this._isEndOfClip = false;
     this._isPrepared = false;
+    this._packetSink = null;
+    this._canvasPacket = null;
+    if (this._videoDecoder?.state !== "closed") {
+      this._videoDecoder?.close();
+    }
+    this._videoDecoder = null;
   }
 
   public isStarving() {

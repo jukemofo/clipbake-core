@@ -1,31 +1,38 @@
-import { VideoClipPreview, VideoClipWorker } from "../../core-manager/clip";
-import {
-  VideoTrack,
-  VideoTrackWorkerDeprecated,
-} from "../../core-manager/track";
+import { VideoClip } from "../../core-manager/clip";
+import { VideoClipRender } from "../render/video-clip-render";
+import { VideoTrackRender } from "../render/video-track-render";
 import { sourceManager } from "./source-manager";
 
 export class TrackManager {
-  private _videoTracks: Map<string, VideoTrackWorkerDeprecated> = new Map();
+  private _videoTracks: Map<string, VideoTrackRender> = new Map();
   private _trackOrders: string[] = [];
 
-  public addVideoTrack(id: string): VideoTrackWorkerDeprecated {
-    const track = new VideoTrackWorkerDeprecated(id);
+  public addVideoTrack(id: string): VideoTrackRender {
+    const existed = this._videoTracks.get(id);
+    if (existed) {
+      return existed;
+    }
+    const track = new VideoTrackRender(id);
     this._videoTracks.set(id, track);
     this._trackOrders.push(id);
 
     return track;
   }
 
-  public async addVideoClip(clip: VideoClipWorker, id: string) {
+  public addVideoClip(clip: VideoClip, id: string) {
     const track = this._videoTracks.get(id);
     if (!track) {
       throw new Error("Not found video track");
     }
+
+    if (track.isClipExisted(clip.id)) {
+      return clip;
+    }
+
     if (!sourceManager.getVideoSource(clip.sourceId)) {
       throw new Error("Not found source");
     }
-    await track.addClip(clip);
+    track.addClip(new VideoClipRender(clip));
   }
 
   public async renderAt(currentTime: number) {
@@ -46,16 +53,6 @@ export class TrackManager {
 
   public isStarving() {
     return Array.from(this._videoTracks.values()).some((t) => t.isStarving());
-  }
-
-  static toVideoTrackPreview(
-    videoTrack: VideoTrackWorkerDeprecated,
-  ): VideoTrack {
-    return { id: videoTrack.id };
-  }
-
-  static toVideoClipPreview(videoClip: VideoClipWorker): VideoClipPreview {
-    return { id: videoClip.id };
   }
 }
 

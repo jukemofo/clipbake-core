@@ -1,6 +1,6 @@
 import { VideoClip } from "../../core-manager/clip";
 import { app } from "../canvas";
-import { trackManagerV2 } from "../manager/track-manager-v2";
+import { trackManager } from "../manager/track-manager";
 import { AddVideoClipMessage } from "../types";
 import { sendToMain } from "../util";
 
@@ -28,8 +28,8 @@ export async function addVideoClip(
       },
       keyframes: [],
     };
-    trackManagerV2.addVideoClip(clip, trackId);
-    await trackManagerV2.seek(currentTime, true);
+    trackManager.addVideoClip(clip, trackId);
+    await trackManager.seek(currentTime, true);
 
     sendToMain({
       type: "FINISH_ADD_VIDEO_CLIP",

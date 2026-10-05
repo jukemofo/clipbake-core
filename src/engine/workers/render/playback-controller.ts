@@ -13,7 +13,13 @@ export class PlaybackController {
   private _onTick: TickCallback;
   private _onSeek: SeekCallback;
 
-  constructor(onTick: TickCallback, onSeek: SeekCallback) {
+  constructor({
+    onTick,
+    onSeek,
+  }: {
+    onTick: TickCallback;
+    onSeek: SeekCallback;
+  }) {
     this._onTick = onTick;
     this._onSeek = onSeek;
   }

@@ -1,4 +1,4 @@
-import { trackManagerV2 } from "../manager/track-manager-v2";
+import { trackManager } from "../manager/track-manager";
 import { AddVideoTrackMessage } from "../types";
 import { sendToMain } from "../util";
 
@@ -8,7 +8,7 @@ export async function addVideoTrack(
 ) {
   try {
     const { id } = msg;
-    const track = trackManagerV2.addVideoTrack(id);
+    const track = trackManager.addVideoTrack(id);
     sendToMain({
       type: "FINISH_ADD_VIDEO_TRACK",
       status: "success",

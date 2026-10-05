@@ -19,11 +19,9 @@ export interface VideoSource {
 
 export interface VideoSourceWorker extends VideoSource {
   vidTrack: InputVideoTrack;
-  vidSink: CanvasSink;
   audTrack?: InputAudioTrack | null;
-  audSink?: AudioBufferSink | null;
-  proxyVidSink?: CanvasSink | null;
-  proxyAudSink?: AudioBufferSink | null;
+  proxyVidTrack?: InputVideoTrack | null;
+  proxyAudTrack?: InputAudioTrack | null;
 }
 
 export interface AudioSourcePreview {

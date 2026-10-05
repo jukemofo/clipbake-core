@@ -7,22 +7,30 @@ import { WrappedMainToWorkerMessage } from "./types";
 import { sendToMain } from "./util";
 
 import { masterTimeline } from "./manager/animation-manager";
-import { trackManagerV2 } from "./manager/track-manager-v2";
+import { trackManager } from "./manager/track-manager";
 
 let taskQueue = Promise.resolve();
 
-const playbackController = new PlaybackController(
-  (currentTime: number) => {
-    const isStarving = trackManagerV2.isStarving();
+const playbackController = new PlaybackController({
+  onTick: (currentTime: number) => {
+    const isStarving = trackManager.isStarving();
+    // find a way to implement send buffer-resolved
+    // if (isStarving) {
+    //   sendToMain({
+    //     requestId: "buffer-wait-id",
+    //     status: "success",
+    //     type: "BUFFER_WAIT",
+    //   });
+    //   return;
+    // }
     masterTimeline.seek(currentTime);
-    trackManagerV2.renderAt(currentTime);
+    trackManager.renderAt(currentTime);
   },
-  (targetTime: number, highQuality: boolean) => {
-    console.log("seek", targetTime);
+  onSeek: (targetTime: number, highQuality: boolean) => {
     masterTimeline.seek(targetTime);
-    trackManagerV2.seek(targetTime, highQuality);
+    trackManager.seek(targetTime, highQuality);
   },
-);
+});
 
 self.onmessage = (e: MessageEvent<WrappedMainToWorkerMessage>) => {
   taskQueue.then(async () => {

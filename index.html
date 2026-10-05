@@ -84,9 +84,19 @@
 
           const videoClip2 = await engine.core.addVideoClip({
             id: "video-clip-id-2",
-            start: 0,
+            start: 5,
             sourceStart: 190,
-            duration: 15,
+            duration: 7,
+            trackId: videoTrack.id,
+            sourceId: source.id,
+            property: {},
+          });
+
+          const videoClip3 = await engine.core.addVideoClip({
+            id: "video-clip-id-3",
+            start: 12,
+            sourceStart: 20,
+            duration: 6,
             trackId: videoTrack.id,
             sourceId: source.id,
             property: {},
