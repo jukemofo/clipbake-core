@@ -128,7 +128,7 @@
             id: "video-clip-id",
             start: 0,
             sourceStart: 260,
-            duration: 2,
+            duration: 6,
             trackId: videoTrack.id,
             sourceId: source.id,
             property: {},
@@ -213,7 +213,7 @@
         progressBar.style.width = `${percent * 100}%`;
 
         // Giả lập tính thời gian
-        const currentSeconds = Math.floor(percent * totalDuration);
+        const currentSeconds = percent * totalDuration;
         timeDisplay.textContent = currentSeconds.toFixed(3);
         engine.scrub(currentSeconds);
       }

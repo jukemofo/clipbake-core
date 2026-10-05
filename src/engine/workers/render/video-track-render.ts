@@ -92,6 +92,7 @@ export class VideoTrackRender {
     this._sessionId += 1;
     const currentSession = this._sessionId;
     this._currentClip?.close();
+    await this.close();
     const clip = this._findCurrentClip(currentTime);
     const nextClip = this._findNearestClip(currentTime);
 
