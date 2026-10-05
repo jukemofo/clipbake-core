@@ -30,6 +30,8 @@ const playbackController = new PlaybackController({
     masterTimeline.seek(targetTime);
     if (highQuality) {
       trackManager.seek(targetTime);
+    } else {
+      trackManager.scrub(targetTime);
     }
   },
 });
@@ -52,14 +54,18 @@ self.onmessage = (e: MessageEvent<WrappedMainToWorkerMessage>) => {
         break;
       case "SEEK":
         const { time: seekedTime, highQuality } = restMessage;
-        playbackController.pause(seekedTime);
+        if (playbackController.isPlaying) {
+          playbackController.pause(seekedTime, true);
+        }
         await playbackController.seek(seekedTime, highQuality);
-        sendToMain({
-          type: "SEEK_RESOLVED",
-          time: seekedTime,
-          status: "success",
-          requestId,
-        });
+        if (highQuality) {
+          sendToMain({
+            type: "SEEK_RESOLVED",
+            time: seekedTime,
+            status: "success",
+            requestId,
+          });
+        }
         break;
       case "RESIZE":
         const { width: resizeWidth, height: resizeHeight } = restMessage;

@@ -34,7 +34,7 @@ export class PlaybackController {
     this._loop();
   }
 
-  public pause(pausedTime?: number) {
+  public pause(pausedTime?: number, noRender?: boolean) {
     this._isPlaying = false;
 
     if (this._rafId !== null) {
@@ -44,7 +44,9 @@ export class PlaybackController {
 
     if (pausedTime !== undefined) {
       this._currentTime = pausedTime;
-      this._onTick(this._currentTime);
+      if (noRender) {
+        this._onTick(this._currentTime);
+      }
     }
   }
 

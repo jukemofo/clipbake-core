@@ -12,6 +12,7 @@ import { AudioEngine } from "./audio-engine";
 
 type CoordinateEvents = {
   "playback:time-update": number;
+  "playback:duration-update": number;
   "playback:play": void;
   "playback:pause": void;
   "playback:start-init": void;
@@ -29,7 +30,7 @@ type WorkerResponseCallback = (
 export class EngineCoordinator {
   private _init: boolean = false;
   private _playHeadAnimId: number | null = null;
-  private _duration: number = 30;
+
   private _width: number = 1920;
   private _height: number = 1080;
   private _backgroundColor: string = "#000000";
@@ -95,7 +96,7 @@ export class EngineCoordinator {
     if (!this._init) {
       throw new Error("Please init the engine first!");
     }
-    if (masterClock.getCurrentTime() >= this._duration) {
+    if (masterClock.getCurrentTime() >= this.core.duration) {
       this.seek(0);
     }
     return playbackMachine.send("PLAY");
@@ -117,7 +118,7 @@ export class EngineCoordinator {
     if (!this._init) {
       throw new Error("Please init the engine first!");
     }
-    const clampedTime = Math.max(0, Math.min(targetTime, this._duration));
+    const clampedTime = Math.max(0, Math.min(targetTime, this.core.duration));
     masterClock.seek(clampedTime);
     this.pub("playback:time-update", clampedTime);
 
@@ -142,7 +143,7 @@ export class EngineCoordinator {
     }
     if (playbackMachine.currentState !== "SCRUBBING") return;
 
-    const clampedTime = Math.max(0, Math.min(targetTime, this._duration));
+    const clampedTime = Math.max(0, Math.min(targetTime, this.core.duration));
     masterClock.seek(clampedTime);
     this.pub("playback:time-update", clampedTime);
     this._sendToWorker({
@@ -200,7 +201,7 @@ export class EngineCoordinator {
     this._coreManager.close({ includeSources: true });
   }
 
-  private pub<T extends keyof CoordinateEvents>(
+  public pub<T extends keyof CoordinateEvents>(
     event: T,
     ...args: CoordinateEvents[T] extends void ? [] : [data: CoordinateEvents[T]]
   ) {
@@ -213,10 +214,11 @@ export class EngineCoordinator {
 
     const loop = () => {
       const currentTime = masterClock.getCurrentTime();
+      const duration = this.core.duration;
 
-      if (currentTime >= this._duration) {
-        masterClock.seek(this._duration);
-        this.pub("playback:time-update", this._duration);
+      if (currentTime >= this.core.duration) {
+        masterClock.seek(duration);
+        this.pub("playback:time-update", duration);
         playbackMachine.send("PAUSE");
         return;
       }
@@ -275,7 +277,6 @@ export class EngineCoordinator {
 
   // Main logic goes here
   private _handleStateChange = (nextState: PlaybackState) => {
-    console.log(nextState);
     switch (nextState) {
       case "PLAYING": {
         masterClock.play();

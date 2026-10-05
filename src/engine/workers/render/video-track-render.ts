@@ -121,6 +121,24 @@ export class VideoTrackRender {
     this._renderProperty(this._spriteA);
   }
 
+  public async scrub(currentTime: number) {
+    const clip = this._findCurrentClip(currentTime);
+    this._activeSpriteLabel = "A";
+    this._spriteB.texture = Texture.EMPTY;
+    if (!clip) {
+      return;
+    }
+
+    const elapsed = currentTime - clip.start;
+    const canvas = await clip.scrub(clip.sourceStart + elapsed);
+    if (canvas) {
+      this._textureA.source.resource = canvas;
+      this._spriteA.texture = this._textureA;
+      this._textureA.source.update();
+    }
+    this._renderProperty(this._spriteA);
+  }
+
   private _findCurrentClip(currentTime: number) {
     let currentClip = null;
     for (const clip of this._clips) {

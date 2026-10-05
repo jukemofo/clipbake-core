@@ -19,6 +19,7 @@ type SendToWorkerAndWaitCallBack = (
 export class CoreManager {
   private _engine: EngineCoordinator;
   private _videoTracks: Map<string, VideoTrack> = new Map();
+  private _duration: number = 0;
   private _sendToWorkerAndWait: SendToWorkerAndWaitCallBack;
 
   constructor(
@@ -112,10 +113,23 @@ export class CoreManager {
       track.clips.push(videoClip);
       track.clips.sort((a, b) => a.start - b.start);
 
+      this._engine.pub("playback:duration-update", this.duration);
+
       return videoClip;
     } else {
       throw new Error("Something went wrong to worker!");
     }
+  }
+
+  public get duration() {
+    this._duration = 0;
+    for (const track of this._videoTracks.values()) {
+      const clip = track.clips.at(-1);
+      if (!clip) continue;
+
+      this._duration = Math.max(this._duration, clip.duration + clip.start);
+    }
+    return this._duration;
   }
 
   public get videoTracks() {

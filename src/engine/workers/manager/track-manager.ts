@@ -54,6 +54,12 @@ export class TrackManager {
     );
   }
 
+  public async scrub(targetTime: number) {
+    await Promise.all(
+      Array.from(this._videoTracks.values()).map((t) => t.scrub(targetTime)),
+    );
+  }
+
   public isStarving() {
     return Array.from(this._videoTracks.values()).some((t) => t.isStarving());
   }
