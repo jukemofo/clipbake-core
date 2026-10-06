@@ -1,6 +1,10 @@
-import { MediaClipProperty, VideoClip } from "../../core-manager/clip";
-import { VideoSource } from "../../core-manager/source";
-import { VideoTrack } from "../../core-manager/track";
+import {
+  ImageClip,
+  MediaClipProperty,
+  VideoClip,
+} from "../../core-manager/clip";
+import { ImageSource, VideoSource } from "../../core-manager/source";
+import { ImageTrack, VideoTrack } from "../../core-manager/track";
 
 export type InitMessage = {
   type: "INIT";
@@ -30,8 +34,20 @@ export type AddVideoSourceMessage = {
   proxySource?: File | string;
 };
 
+export type AddImageSourceMessage = {
+  type: "ADD_IMAGE_SOURCE";
+  id: string;
+  inputSource: File | string;
+  proxySource?: File | string;
+};
+
 export type AddVideoTrackMessage = {
   type: "ADD_VIDEO_TRACK";
+  id: string;
+};
+
+export type AddImageTrackMessage = {
+  type: "ADD_IMAGE_TRACK";
   id: string;
 };
 
@@ -47,6 +63,17 @@ export type AddVideoClipMessage = {
   currentTime: number;
 };
 
+export type AddImageClipMessage = {
+  type: "ADD_IMAGE_CLIP";
+  id: string;
+  trackId: string;
+  sourceId: string;
+  start: number;
+  duration: number;
+  property?: Partial<MediaClipProperty>;
+  currentTime: number;
+};
+
 export type MainToWorkerMessage =
   | InitMessage
   | PlayMessage
@@ -54,8 +81,11 @@ export type MainToWorkerMessage =
   | SeekMessage
   | ResizeMessage
   | AddVideoSourceMessage
+  | AddImageSourceMessage
   | AddVideoTrackMessage
-  | AddVideoClipMessage;
+  | AddImageTrackMessage
+  | AddVideoClipMessage
+  | AddImageClipMessage;
 
 export type WrappedMainToWorkerMessage = MainToWorkerMessage & {
   requestId: string;
@@ -103,6 +133,13 @@ export type WorkerToMainMessage =
       requestId: string;
     }
   | {
+      type: "FINISH_ADD_IMAGE_SOURCE";
+      data?: ImageSource;
+      status: StatusType;
+      errorMsg?: string;
+      requestId: string;
+    }
+  | {
       type: "FINISH_ADD_VIDEO_TRACK";
       data?: VideoTrack;
       status: StatusType;
@@ -110,8 +147,22 @@ export type WorkerToMainMessage =
       requestId: string;
     }
   | {
+      type: "FINISH_ADD_IMAGE_TRACK";
+      data?: ImageTrack;
+      status: StatusType;
+      errorMsg?: string;
+      requestId: string;
+    }
+  | {
       type: "FINISH_ADD_VIDEO_CLIP";
       data?: VideoClip[];
+      status: StatusType;
+      errorMsg?: string;
+      requestId: string;
+    }
+  | {
+      type: "FINISH_ADD_IMAGE_CLIP";
+      data?: ImageClip[];
       status: StatusType;
       errorMsg?: string;
       requestId: string;

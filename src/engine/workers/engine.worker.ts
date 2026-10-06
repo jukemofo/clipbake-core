@@ -8,6 +8,9 @@ import { sendToMain } from "./util";
 
 import { masterTimeline } from "./manager/animation-manager";
 import { trackManager } from "./manager/track-manager";
+import { addImageSource } from "./handle-case/add-image-source";
+import { addImageTrack } from "./handle-case/add-image-track";
+import { addImageClip } from "./handle-case/add-image-clip";
 
 let taskQueue = Promise.resolve();
 
@@ -103,11 +106,20 @@ self.onmessage = (e: MessageEvent<WrappedMainToWorkerMessage>) => {
       case "ADD_VIDEO_SOURCE":
         await addVideoSource(restMessage, requestId);
         break;
+      case "ADD_IMAGE_SOURCE":
+        await addImageSource(restMessage, requestId);
+        break;
       case "ADD_VIDEO_TRACK":
         await addVideoTrack(restMessage, requestId);
         break;
+      case "ADD_IMAGE_TRACK":
+        await addImageTrack(restMessage, requestId);
+        break;
       case "ADD_VIDEO_CLIP":
         await addVideoClip(restMessage, requestId);
+        break;
+      case "ADD_IMAGE_CLIP":
+        await addImageClip(restMessage, requestId);
         break;
     }
   });

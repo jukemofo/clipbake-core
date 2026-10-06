@@ -39,3 +39,12 @@ export interface AudioClip {
   duration: number;
   property: AudioClipProperty;
 }
+
+export interface ImageClip {
+  id: string;
+  sourceId: string;
+  start: number;
+  duration: number;
+  property: MediaClipProperty;
+  keyframes: Keyframe[];
+}

@@ -1,23 +1,24 @@
 import { CanvasSource, Container, Sprite, Texture } from "pixi.js";
 import { app } from "../canvas";
-import { VideoClipRender } from "./video-clip-render";
+import { ImageClip } from "../../core-manager/clip";
+import { sourceManager } from "../manager/source-manager";
 
-export class VideoTrackRender {
+export class ImageTrackRender {
   private _id: string;
-  private _clips: VideoClipRender[] = [];
+  private _clips: ImageClip[] = [];
   private _container: Container;
   private _textureA: Texture;
   private _textureB: Texture;
   private _spriteA: Sprite;
   private _spriteB: Sprite;
   private _activeSpriteLabel: "A" | "B";
-  private _currentClip: VideoClipRender | null = null;
+  private _currentClip: ImageClip | null = null;
   private _sessionId: number = 0;
 
   constructor(id: string) {
     this._id = id;
-    this._container = new Container();
 
+    this._container = new Container();
     this._activeSpriteLabel = "A";
     this._textureA = new Texture({
       source: new CanvasSource({ resource: new OffscreenCanvas(200, 200) }),
@@ -37,7 +38,7 @@ export class VideoTrackRender {
     app!.stage.addChild(this._container);
   }
 
-  public addClip(clip: VideoClipRender) {
+  public addClip(clip: ImageClip) {
     this._clips.push(clip);
     this._clips.sort((a, b) => a.start - b.start);
 
@@ -55,24 +56,17 @@ export class VideoTrackRender {
 
   public async renderAt(currentTime: number) {
     const clip = this._findCurrentClip(currentTime);
-    const nextClip = this._findNearestClip(currentTime);
     let activeSprite = this._getActiveSprite();
     if (!clip) {
+      this._currentClip = null;
       activeSprite.texture = Texture.EMPTY;
       return;
     }
-
-    if (nextClip && nextClip.id !== clip.id) {
-      nextClip.prepare();
-    }
-
     if (!this._currentClip) {
       this._currentClip = clip;
     }
-
-    const wrapped = await clip.getFrame(currentTime);
+    const canvas = this._getCanvas(clip);
     if (this._currentClip.id !== clip.id) {
-      this._currentClip?.close();
       activeSprite.texture = Texture.EMPTY;
       activeSprite.zIndex = 0;
       this._activeSpriteLabel = this._activeSpriteLabel === "A" ? "B" : "A";
@@ -81,8 +75,7 @@ export class VideoTrackRender {
       this._currentClip = clip;
     }
 
-    if (wrapped) {
-      const canvas = wrapped.canvas;
+    if (canvas) {
       const texture =
         this._activeSpriteLabel === "A" ? this._textureA : this._textureB;
       texture.source.resource = canvas;
@@ -96,30 +89,23 @@ export class VideoTrackRender {
   public async seek(currentTime: number) {
     this._sessionId += 1;
     const currentSession = this._sessionId;
-    this._currentClip?.close();
     await this.close();
     const clip = this._findCurrentClip(currentTime);
-    const nextClip = this._findNearestClip(currentTime);
-    this._activeSpriteLabel = "A";
     this._currentClip = clip;
-
-    if (nextClip && nextClip.id !== clip?.id) {
-      nextClip.prepare();
-    }
+    this._activeSpriteLabel = "A";
 
     if (!clip) {
       this._spriteA.texture = Texture.EMPTY;
       return;
     }
 
-    await clip.seek(currentTime);
-    const wrapped = await clip.getFrame(currentTime);
     if (currentSession !== this._sessionId) {
       return;
     }
+    const canvas = this._getCanvas(clip);
     this._spriteB.texture = Texture.EMPTY;
-    if (wrapped) {
-      this._textureA.source.resource = wrapped.canvas;
+    if (canvas) {
+      this._textureA.source.resource = canvas;
       this._spriteA.texture = this._textureA;
       this._textureA.source.update();
     }
@@ -134,9 +120,7 @@ export class VideoTrackRender {
       this._spriteA.texture = Texture.EMPTY;
       return;
     }
-
-    const elapsed = currentTime - clip.start;
-    const canvas = await clip.scrub(clip.sourceStart + elapsed);
+    const canvas = this._getCanvas(clip);
     if (canvas) {
       this._textureA.source.resource = canvas;
       this._spriteA.texture = this._textureA;
@@ -160,17 +144,6 @@ export class VideoTrackRender {
     return currentClip;
   }
 
-  private _findNearestClip(currentTime: number) {
-    let currentClip = null;
-    for (const clip of this._clips) {
-      if (clip.start > currentTime) {
-        currentClip = clip;
-        break;
-      }
-    }
-    return currentClip;
-  }
-
   private _getActiveSprite() {
     return this._activeSpriteLabel === "A" ? this._spriteA : this._spriteB;
   }
@@ -181,27 +154,33 @@ export class VideoTrackRender {
     sprite.anchor.set(0.5, 0.5);
   }
 
+  private _getCanvas(clip: ImageClip) {
+    const source = sourceManager.getImageSource(clip.sourceId);
+    if (!source) {
+      throw new Error("Not found source");
+    }
+    return source.proxyCanvas ?? source.canvas;
+  }
+
   public isStarving() {
-    return this._currentClip?.isStarving();
+    return false;
   }
 
   public isClipExisted(id: string) {
     return this._clips.find((c) => c.id === id);
   }
 
-  public async close() {
-    await Promise.all(this._clips.map((c) => c.close()));
-  }
-
   public updateOrder(index: number) {
     this._container.zIndex = index;
   }
+
+  public async close() {}
 
   public get id() {
     return this._id;
   }
 
   public get rawClips() {
-    return this._clips.map((c) => c.toRaw());
+    return this._clips;
   }
 }

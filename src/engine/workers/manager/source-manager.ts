@@ -10,9 +10,12 @@ import {
 import {
   AudioSource,
   AudioSourceMainThread,
+  ImageSource,
+  ImageSourceWorker,
   VideoSource,
   VideoSourceWorker,
 } from "../../core-manager/source";
+import { getImageDimensions } from "../util/img";
 
 type SourceParam = {
   id: string;
@@ -22,6 +25,7 @@ type SourceParam = {
 
 export class SourceManager {
   private _videoSources: Map<string, VideoSourceWorker> = new Map();
+  private _imageSources: Map<string, ImageSourceWorker> = new Map();
   private _audioSources: Map<string, AudioSourceMainThread> = new Map();
 
   public async addVideoSource({
@@ -98,7 +102,7 @@ export class SourceManager {
     const { audTrack } = await this._loadTracks(inputSource);
 
     if (!audTrack) {
-      throw new Error("Not found video track for this source");
+      throw new Error("Not found audio track for this source");
     }
 
     let proxyAudTrack: InputAudioTrack | null = null;
@@ -127,6 +131,43 @@ export class SourceManager {
     return source;
   }
 
+  public async addImageSource({
+    id,
+    inputSource,
+    proxySource,
+  }: SourceParam): Promise<ImageSourceWorker> {
+    if (!id || !inputSource) {
+      throw new Error("Invalid params");
+    }
+
+    const existedSource = this._imageSources.get(id);
+    if (existedSource) {
+      return existedSource;
+    }
+
+    const canvas = await this._loadImgCanvas(inputSource);
+
+    let proxyCanvas: OffscreenCanvas | null = null;
+    if (proxySource) {
+      proxyCanvas = await this._loadImgCanvas(inputSource);
+    }
+
+    const width = canvas.width;
+    const height = canvas.height;
+    const source = Object.freeze(
+      Builder<ImageSourceWorker>()
+        .id(id)
+        .width(width!)
+        .height(height!)
+        .canvas(canvas)
+        .proxyCanvas(proxyCanvas || undefined)
+        .build(),
+    );
+
+    this._imageSources.set(id, source);
+    return source;
+  }
+
   private async _loadTracks(inputSource: File | string) {
     const input = new Input({
       formats: ALL_FORMATS,
@@ -141,6 +182,36 @@ export class SourceManager {
     return { vidTrack, audTrack };
   }
 
+  private async _loadImgCanvas(inputSource: File | string) {
+    try {
+      let bitmap: ImageBitmap;
+
+      if (typeof inputSource === "string") {
+        {
+          const response = await fetch(inputSource);
+          if (!response.ok) {
+            throw new Error(`Failed to download img: ${response.statusText}`);
+          }
+          const blob = await response.blob();
+          bitmap = await createImageBitmap(blob);
+        }
+      } else {
+        bitmap = await createImageBitmap(inputSource);
+      }
+
+      const offscreenCanvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const ctx = offscreenCanvas.getContext("2d");
+      if (!ctx) {
+        throw new Error("Can not initiate image source.");
+      }
+      ctx.drawImage(bitmap, 0, 0);
+      bitmap.close();
+      return offscreenCanvas;
+    } catch (e) {
+      throw e;
+    }
+  }
+
   static toVideoSourcePreview(videoSource: VideoSourceWorker): VideoSource {
     const { proxyAudTrack, proxyVidTrack, vidTrack, audTrack, ...rest } =
       videoSource;
@@ -152,12 +223,25 @@ export class SourceManager {
     return { ...rest };
   }
 
+  static toImageSourceRaw(imageSource: ImageSourceWorker): ImageSource {
+    const { canvas, proxyCanvas, ...rest } = imageSource;
+    return { ...rest };
+  }
+
   public get totalSources() {
-    return this._videoSources.size;
+    return (
+      this._videoSources.size +
+      this._imageSources.size +
+      this._audioSources.size
+    );
   }
 
   public getVideoSource(id: string) {
     return this._videoSources.get(id);
+  }
+
+  public getImageSource(id: string) {
+    return this._imageSources.get(id);
   }
 
   public getAudioSource(id: string) {

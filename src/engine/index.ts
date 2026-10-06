@@ -30,7 +30,6 @@ type WorkerResponseCallback = (
 export class EngineCoordinator {
   private _init: boolean = false;
   private _playHeadAnimId: number | null = null;
-
   private _width: number = 1920;
   private _height: number = 1080;
   private _backgroundColor: string = "#000000";

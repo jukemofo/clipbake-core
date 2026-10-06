@@ -1,4 +1,4 @@
-import { AudioClip, VideoClip } from "./clip";
+import { AudioClip, ImageClip, VideoClip } from "./clip";
 
 export interface VideoTrack {
   id: string;
@@ -10,6 +10,12 @@ export interface AudioTrack {
   id: string;
   clips: AudioClip[];
   type: "audio";
+}
+
+export interface ImageTrack {
+  id: string;
+  clips: ImageClip[];
+  type: "image";
 }
 
 // export class VideoTrackWorkerDeprecated {

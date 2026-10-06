@@ -3,14 +3,14 @@ import { EngineCoordinator } from "..";
 import { masterClock } from "../master-clock";
 import { MainToWorkerMessage, WorkerToMainMessage } from "../workers/types";
 import { AudioClip, AudioClipProperty, MediaClipProperty } from "./clip";
-import { AudioTrack, VideoTrack } from "./track";
+import { AudioTrack, ImageTrack, VideoTrack } from "./track";
 import {
   SourceManager,
   sourceManager,
 } from "../workers/manager/source-manager";
 import { playbackMachine } from "../playback-state-machine";
 
-type AddVideoSourceParams = {
+type AddSourceParams = {
   id: string;
   inputSource: File | string;
   proxySource?: File | string;
@@ -23,6 +23,7 @@ type SendToWorkerAndWaitCallBack = (
 export class CoreManager {
   private _engine: EngineCoordinator;
   private _videoTracks: Map<string, VideoTrack> = new Map();
+  private _imageTracks: Map<string, ImageTrack> = new Map();
   private _audioTracks: Map<string, AudioTrack> = new Map();
   private _tracksOrder: string[] = [];
   private _duration: number = 0;
@@ -40,7 +41,7 @@ export class CoreManager {
     id,
     inputSource,
     proxySource,
-  }: AddVideoSourceParams) {
+  }: AddSourceParams) {
     if (!this._engine.isInit) {
       throw new Error("Please init the engine first!");
     }
@@ -64,7 +65,7 @@ export class CoreManager {
     id,
     inputSource,
     proxySource,
-  }: AddVideoSourceParams) {
+  }: AddSourceParams) {
     if (!this._engine.isInit) {
       throw new Error("Please init the engine first!");
     }
@@ -74,6 +75,28 @@ export class CoreManager {
       proxySource,
     });
     return SourceManager.toAudioSourceRaw(audioSourceMainThread);
+  }
+
+  public async addImageSource({
+    id,
+    inputSource,
+    proxySource,
+  }: AddSourceParams) {
+    if (!this._engine.isInit) {
+      throw new Error("Please init the engine first!");
+    }
+    const response = await this._sendToWorkerAndWait({
+      type: "ADD_IMAGE_SOURCE",
+      id: id,
+      inputSource: inputSource,
+      proxySource: proxySource,
+    });
+
+    if (response.type === "FINISH_ADD_IMAGE_SOURCE") {
+      return response.data!;
+    } else {
+      throw new Error("Something went wrong to worker!");
+    }
   }
 
   public async addVideoTrack({ id }: { id: string }) {
@@ -88,6 +111,25 @@ export class CoreManager {
     if (response.type === "FINISH_ADD_VIDEO_TRACK") {
       const result = response.data!;
       this._videoTracks.set(id, result);
+      this._tracksOrder.push(id);
+      return result;
+    } else {
+      throw new Error("Something went wrong to worker!");
+    }
+  }
+
+  public async addImageTrack({ id }: { id: string }) {
+    if (!this._engine.isInit) {
+      throw new Error("Please init the engine first!");
+    }
+    const response = await this._sendToWorkerAndWait({
+      type: "ADD_IMAGE_TRACK",
+      id: id,
+    });
+
+    if (response.type === "FINISH_ADD_IMAGE_TRACK") {
+      const result = response.data!;
+      this._imageTracks.set(id, result);
       this._tracksOrder.push(id);
       return result;
     } else {
@@ -149,6 +191,52 @@ export class CoreManager {
       track.clips = videoClips;
       track.clips.sort((a, b) => a.start - b.start);
 
+      this._engine.pub("playback:duration-update", this.duration);
+      return track.clips.find((c) => c.id === id);
+    } else {
+      throw new Error("Something went wrong to worker!");
+    }
+  }
+
+  public async addImageClip({
+    id,
+    trackId,
+    sourceId,
+    start,
+    duration,
+    property,
+  }: {
+    id: string;
+    trackId: string;
+    sourceId: string;
+    start: number;
+    duration: number;
+    property?: Partial<MediaClipProperty>;
+  }) {
+    if (!this._engine.isInit) {
+      throw new Error("Please init the engine first!");
+    }
+    if (playbackMachine.currentState === "PLAYING") {
+      playbackMachine.send("PAUSE");
+    }
+    const response = await this._sendToWorkerAndWait({
+      type: "ADD_IMAGE_CLIP",
+      id: id,
+      trackId: trackId,
+      sourceId: sourceId,
+      start: start,
+      duration: duration,
+      property: property,
+      currentTime: masterClock.getCurrentTime(),
+    });
+
+    if (response.type === "FINISH_ADD_IMAGE_CLIP") {
+      const track = this._imageTracks.get(trackId);
+      if (!track) {
+        throw new Error("Not found track!");
+      }
+      track.clips = response.data!;
+      track.clips.sort((a, b) => a.start - b.start);
       this._engine.pub("playback:duration-update", this.duration);
       return track.clips.find((c) => c.id === id);
     } else {

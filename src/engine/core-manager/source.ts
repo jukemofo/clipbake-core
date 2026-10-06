@@ -36,13 +36,13 @@ export interface AudioSourceMainThread extends AudioSource {
   proxyAudTrack?: InputAudioTrack | null;
 }
 
-export interface ImageSourcePreview {
+export interface ImageSource {
   id: string;
   width: number;
   height: number;
 }
 
-export interface ImageSourceWorker extends ImageSourcePreview {
+export interface ImageSourceWorker extends ImageSource {
   canvas: OffscreenCanvas;
   proxyCanvas?: OffscreenCanvas;
 }
