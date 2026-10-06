@@ -198,7 +198,7 @@ export class EngineCoordinator {
       this._worker.terminate();
       this._worker = null;
     }
-    this._coreManager.close({ includeSources: true });
+    this._coreManager.close();
   }
 
   public pub<T extends keyof CoordinateEvents>(

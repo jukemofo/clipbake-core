@@ -24,17 +24,16 @@ export interface VideoSourceWorker extends VideoSource {
   proxyAudTrack?: InputAudioTrack | null;
 }
 
-export interface AudioSourcePreview {
+export interface AudioSource {
   id: string;
   duration: number;
   sampleRate?: number;
   numberOfChannels?: number;
 }
 
-export interface AudioSourceWorker extends AudioSourcePreview {
-  audTrack: InputAudioTrack | null;
-  audSink: AudioBufferSink | null;
-  proxyAudSink?: AudioBufferSink | null;
+export interface AudioSourceMainThread extends AudioSource {
+  audTrack: InputAudioTrack;
+  proxyAudTrack?: InputAudioTrack | null;
 }
 
 export interface ImageSourcePreview {

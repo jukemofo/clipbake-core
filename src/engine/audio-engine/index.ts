@@ -21,7 +21,10 @@ export class AudioEngine {
     this._abortController = new AbortController();
     const signal = this._abortController.signal;
 
-    const tracks = Array.from(this._core.videoTracks.values());
+    const tracks = Array.from([
+      ...this._core.videoTracks.values(),
+      ...this._core.audioTracks.values(),
+    ]);
     const audioContext = masterClock.audioContext;
     if (!audioContext) throw new Error("not found audio context");
 
@@ -42,7 +45,13 @@ export class AudioEngine {
           if (startTimelineTime >= clipEnd) continue;
 
           if (!this._sinkCache[clip.sourceId]) {
-            const source = sourceManager.getVideoSource(clip.sourceId);
+            let source;
+            if (track.type === "audio") {
+              source = sourceManager.getAudioSource(clip.sourceId);
+            }
+            if (track.type === "video") {
+              source = sourceManager.getVideoSource(clip.sourceId);
+            }
             if (!source || !source.audTrack) continue;
             this._sinkCache[source.id] = new AudioBufferSink(source.audTrack);
           }
@@ -51,7 +60,7 @@ export class AudioEngine {
           if (!clipGain) {
             clipGain = audioContext.createGain();
             // TODO: change volume here
-            const volume = 1;
+            const volume = clip.property.volume;
             clipGain.gain.value = volume ** 2;
             clipGain.connect(this._masterGain!);
             this._clipGains.set(clip.id, clipGain);

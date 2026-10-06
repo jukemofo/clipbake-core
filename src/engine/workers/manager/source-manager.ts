@@ -7,7 +7,12 @@ import {
   InputVideoTrack,
   UrlSource,
 } from "mediabunny";
-import { VideoSource, VideoSourceWorker } from "../../core-manager/source";
+import {
+  AudioSource,
+  AudioSourceMainThread,
+  VideoSource,
+  VideoSourceWorker,
+} from "../../core-manager/source";
 
 type SourceParam = {
   id: string;
@@ -17,6 +22,7 @@ type SourceParam = {
 
 export class SourceManager {
   private _videoSources: Map<string, VideoSourceWorker> = new Map();
+  private _audioSources: Map<string, AudioSourceMainThread> = new Map();
 
   public async addVideoSource({
     id,
@@ -32,7 +38,7 @@ export class SourceManager {
       return existedSource;
     }
 
-    const { vidTrack, audTrack } = await this._loadTracksSinks(inputSource);
+    const { vidTrack, audTrack } = await this._loadTracks(inputSource);
 
     if (!vidTrack) {
       throw new Error("Not found video track for this source");
@@ -44,7 +50,7 @@ export class SourceManager {
       const {
         vidTrack: extractedProxyVidTrack,
         audTrack: extractedProxyAudTrack,
-      } = await this._loadTracksSinks(proxySource);
+      } = await this._loadTracks(proxySource);
       proxyVidTrack = extractedProxyVidTrack;
       proxyAudTrack = extractedProxyAudTrack;
     }
@@ -76,7 +82,52 @@ export class SourceManager {
     return source;
   }
 
-  private async _loadTracksSinks(inputSource: File | string) {
+  public async addAudioSourceMainThread({
+    id,
+    inputSource,
+    proxySource,
+  }: SourceParam): Promise<AudioSourceMainThread> {
+    if (!id || !inputSource) {
+      throw new Error("Invalid params");
+    }
+    const existedSource = this._audioSources.get(id);
+    if (existedSource) {
+      return existedSource;
+    }
+
+    const { audTrack } = await this._loadTracks(inputSource);
+
+    if (!audTrack) {
+      throw new Error("Not found video track for this source");
+    }
+
+    let proxyAudTrack: InputAudioTrack | null = null;
+    if (proxySource) {
+      const { audTrack: extractedProxyAudTrack } =
+        await this._loadTracks(proxySource);
+      proxyAudTrack = extractedProxyAudTrack;
+    }
+
+    const duration = await audTrack.computeDuration();
+    const sampleRate = await audTrack?.getSampleRate();
+    const numberOfChannels = await audTrack?.getNumberOfChannels();
+
+    const source = Object.freeze(
+      Builder<AudioSourceMainThread>()
+        .id(id)
+        .duration(duration!)
+        .numberOfChannels(numberOfChannels)
+        .sampleRate(sampleRate)
+        .audTrack(audTrack)
+        .proxyAudTrack(proxyAudTrack)
+        .build(),
+    );
+
+    this._audioSources.set(id, source);
+    return source;
+  }
+
+  private async _loadTracks(inputSource: File | string) {
     const input = new Input({
       formats: ALL_FORMATS,
       source:
@@ -87,7 +138,6 @@ export class SourceManager {
 
     const vidTrack = await input.getPrimaryVideoTrack();
     const audTrack = await input.getPrimaryAudioTrack();
-
     return { vidTrack, audTrack };
   }
 
@@ -97,12 +147,21 @@ export class SourceManager {
     return { ...rest };
   }
 
+  static toAudioSourceRaw(audioSource: AudioSourceMainThread): AudioSource {
+    const { proxyAudTrack, audTrack, ...rest } = audioSource;
+    return { ...rest };
+  }
+
   public get totalSources() {
     return this._videoSources.size;
   }
 
   public getVideoSource(id: string) {
     return this._videoSources.get(id);
+  }
+
+  public getAudioSource(id: string) {
+    return this._audioSources.get(id);
   }
 }
 

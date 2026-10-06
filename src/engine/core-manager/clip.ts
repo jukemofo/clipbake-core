@@ -7,6 +7,10 @@ export interface MediaClipProperty {
   anchorY: number;
 }
 
+export interface AudioClipProperty {
+  volume: number;
+}
+
 export type Keyframe<T = MediaClipProperty> = {
   [K in keyof T]: {
     key: K;
@@ -23,6 +27,15 @@ export interface VideoClip {
   start: number;
   sourceStart: number;
   duration: number;
-  property: MediaClipProperty;
+  property: MediaClipProperty & AudioClipProperty;
   keyframes: Keyframe[];
+}
+
+export interface AudioClip {
+  id: string;
+  sourceId: string;
+  start: number;
+  sourceStart: number;
+  duration: number;
+  property: AudioClipProperty;
 }

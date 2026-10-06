@@ -1,8 +1,15 @@
-import { VideoClip } from "./clip";
+import { AudioClip, VideoClip } from "./clip";
 
 export interface VideoTrack {
   id: string;
   clips: VideoClip[];
+  type: "video";
+}
+
+export interface AudioTrack {
+  id: string;
+  clips: AudioClip[];
+  type: "audio";
 }
 
 // export class VideoTrackWorkerDeprecated {

@@ -24,6 +24,7 @@ export async function addVideoClip(
         anchorY: 0.5,
         scaleX: 1,
         scaleY: 1,
+        volume: 1,
         ...(rest.property ?? {}),
       },
       keyframes: [],

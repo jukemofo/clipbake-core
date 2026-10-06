@@ -218,7 +218,15 @@ export class VideoClipRender {
       sourceId: this._sourceId,
       sourceStart: this._sourceStart,
       start: this._start,
-      property: { x: 0, y: 0, anchorX: 0, anchorY: 0, scaleX: 0, scaleY: 0 },
+      property: {
+        x: 0,
+        y: 0,
+        anchorX: 0,
+        anchorY: 0,
+        scaleX: 0,
+        scaleY: 0,
+        volume: 1,
+      },
     };
   }
 }
