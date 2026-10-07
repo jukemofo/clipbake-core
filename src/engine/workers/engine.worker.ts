@@ -1,3 +1,5 @@
+/// <reference lib="webworker" />
+
 import { addVideoClip } from "./handle-case/add-video-clip";
 import { addVideoSource } from "./handle-case/add-video-source";
 import { addVideoTrack } from "./handle-case/add-video-track";
