@@ -1,6 +1,7 @@
-import { WorkerClient } from "./engine/workers/client";
-import { WorkerAPI } from "./engine/workers/client/type";
-
 export { engine } from "./engine";
 
-const client = new WorkerClient<WorkerAPI>("./worker.ts");
+// const rawTranscript = JSON.parse(readFileSync("raw-transcript.json", "utf-8"));
+
+// const words = rawTranscript.result.result.words;
+
+// writeFileSync("transcript.json", JSON.stringify(words));

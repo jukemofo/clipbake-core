@@ -1,9 +1,9 @@
 /// <reference lib="webworker" />
 
-import type { RPCRequest, RPCResponse, WorkerAPI } from "./type";
+import type { RPCRequest, RPCResponse, WorkerAPIExample } from "./type";
 
 // Khóa type WorkerAPI vào đây để bắt buộc Worker phải viết đúng signature
-const methods: WorkerAPI = {
+const methods: WorkerAPIExample = {
   sayHello: ({ name }) => {
     return `Xin chào ${name}!`;
   },

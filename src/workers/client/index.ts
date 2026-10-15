@@ -5,8 +5,8 @@ export class WorkerClient<T> {
   private reqId = 0;
   private pending = new Map<number, { resolve: Function; reject: Function }>();
 
-  constructor(workerScriptUrl: string) {
-    this.worker = new Worker(new URL(workerScriptUrl, import.meta.url), {
+  constructor(url: URL | string) {
+    this.worker = new Worker(url, {
       type: "module",
     });
     this.worker.onmessage = (e: MessageEvent<RPCResponse>) => {

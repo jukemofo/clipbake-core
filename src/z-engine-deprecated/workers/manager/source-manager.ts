@@ -16,6 +16,7 @@ import {
   VideoSourceWorker,
 } from "../../core-manager/source";
 import { getImageDimensions } from "../util/img";
+import { SplitText } from "pixi.js";
 
 type SourceParam = {
   id: string;
@@ -36,6 +37,11 @@ export class SourceManager {
     if (!id || !inputSource) {
       throw new Error("Invalid params");
     }
+
+    const caption = new SplitText({
+      text: "",
+      style: {},
+    });
 
     const existedSource = this._videoSources.get(id);
     if (existedSource) {

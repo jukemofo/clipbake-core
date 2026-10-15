@@ -1,5 +1,5 @@
 import { AudioBufferSink } from "mediabunny";
-import { EngineCoordinator } from "..";
+import { EngineCoordinator } from "../index-23";
 import { masterClock } from "../master-clock";
 import { MainToWorkerMessage, WorkerToMainMessage } from "../workers/types";
 import { AudioClip, AudioClipProperty, MediaClipProperty } from "./clip";

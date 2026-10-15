@@ -1,309 +1,367 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Clipbake Playground</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  </head>
-  <body class="h-full">
-    <div class="flex flex-col gap-y-2 w-full h-full container p-4">
-      <div class="flex flex-col gap-y-4 items-start">
-        <h1>🎬 Clipbake Core Playground</h1>
-        <div class="flex items-center gap-x-4">
-          <button
-            id="loadBtn"
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-          >
-            Load Video
-          </button>
-          <button
-            id="playBtn"
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-          >
-            Play Video
-          </button>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Clipbake Playground</title>
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    </head>
+    <body class="h-full">
+        <div class="flex flex-col gap-y-2 w-full h-full container p-4">
+            <div class="flex flex-col gap-y-4 items-start">
+                <h1>🎬 Clipbake Core Playground</h1>
+                <div class="flex items-center gap-x-4">
+                    <button
+                        id="loadBtn"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+                    >
+                        Load
+                    </button>
+                    <button
+                        id="playBtn"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+                    >
+                        Play Video
+                    </button>
 
-          <button
-            id="seekBtn"
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-          >
-            Seek at 10
-          </button>
+                    <button
+                        id="seekBtn"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+                    >
+                        Seek at 10
+                    </button>
 
-          <button
-            id="clipBtn"
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-          >
-            Add clip
-          </button>
-        </div>
-        <p id="time">0.00</p>
-      </div>
-
-      <!-- Thẻ cha bọc ngoài: cố định 500px -->
-      <div class="w-[800px] aspect-video">
-        <canvas id="canvas" class="block w-full h-full object-contain"></canvas>
-      </div>
-
-      <div
-        class="w-full max-w-xl bg-slate-800 p-6 rounded-2xl shadow-xl flex flex-col gap-4"
-      >
-        <div class="flex justify-between text-sm text-slate-400">
-          <span id="time-display">00:00</span>
-          <span id="duration">03:45</span>
-        </div>
-
-        <!-- KHU VỰC SCRUBBER -->
-        <!-- py-3 để mở rộng vùng bấm chuột (hitbox) cho dễ kéo -->
-        <div
-          id="scrubber-container"
-          class="relative py-3 cursor-pointer group select-none touch-none"
-        >
-          <!-- Track nền xám -->
-          <div
-            class="w-full h-1.5 bg-slate-700 rounded-full group-hover:h-2.5 transition-all duration-150"
-          >
-            <!-- Track tiến độ màu đỏ -->
-            <div
-              id="progress-bar"
-              class="h-full bg-red-600 rounded-full w-0 relative pointer-events-none"
-            >
-              <!-- Nút tròn kéo (Thumb) -->
-              <div
-                id="thumb"
-                class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3.5 h-3.5 bg-white rounded-full shadow scale-0 group-hover:scale-100 transition-transform duration-150"
-              ></div>
+                    <button
+                        id="clipBtn"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+                    >
+                        Add clip
+                    </button>
+                    <button
+                        id="uploadBtn"
+                        class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+                    >
+                        Upload
+                    </button>
+                </div>
+                <p id="time">0.00</p>
             </div>
-          </div>
+
+            <div class="w-[800px] aspect-video">
+                <canvas
+                    id="canvas"
+                    class="block w-full h-full object-contain"
+                ></canvas>
+            </div>
+
+            <div
+                class="w-full max-w-xl bg-slate-800 p-6 rounded-2xl shadow-xl flex flex-col gap-4"
+            >
+                <div class="flex justify-between text-sm text-slate-400">
+                    <span id="time-display">00:00</span>
+                    <span id="duration">03:45</span>
+                </div>
+
+                <!-- KHU VỰC SCRUBBER -->
+                <!-- py-3 để mở rộng vùng bấm chuột (hitbox) cho dễ kéo -->
+                <div
+                    id="scrubber-container"
+                    class="relative py-3 cursor-pointer group select-none touch-none"
+                >
+                    <!-- Track nền xám -->
+                    <div
+                        class="w-full h-1.5 bg-slate-700 rounded-full group-hover:h-2.5 transition-all duration-150"
+                    >
+                        <!-- Track tiến độ màu đỏ -->
+                        <div
+                            id="progress-bar"
+                            class="h-full bg-red-600 rounded-full w-0 relative pointer-events-none"
+                        >
+                            <!-- Nút tròn kéo (Thumb) -->
+                            <div
+                                id="thumb"
+                                class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3.5 h-3.5 bg-white rounded-full shadow scale-0 group-hover:scale-100 transition-transform duration-150"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-500 text-center">
+                    Click hoặc bấm giữ để kéo tua (Scrubbing)
+                </p>
+            </div>
         </div>
 
-        <p class="text-xs text-slate-500 text-center">
-          Click hoặc bấm giữ để kéo tua (Scrubbing)
-        </p>
-      </div>
-    </div>
+        <!-- Trỏ thẳng vào file TS nguồn, Vite tự biên dịch luôn không cần chờ build! -->
+        <script type="module">
+            import { engine } from "./src/index.ts";
+            const btn = document.getElementById("playBtn");
+            const loadBtn = document.getElementById("loadBtn");
+            const btnSeek = document.getElementById("seekBtn");
+            const btnClip = document.getElementById("clipBtn");
+            const uploadBtn = document.getElementById("uploadBtn");
+            const time = document.getElementById("time");
+            const canvas = document.getElementById("canvas");
 
-    <!-- Trỏ thẳng vào file TS nguồn, Vite tự biên dịch luôn không cần chờ build! -->
-    <script type="module">
-      import { engine } from "./src/index.ts";
-      const btn = document.getElementById("playBtn");
-      const loadBtn = document.getElementById("loadBtn");
-      const btnSeek = document.getElementById("seekBtn");
-      const btnClip = document.getElementById("clipBtn");
-      const time = document.getElementById("time");
-      const canvas = document.getElementById("canvas");
+            const container = document.getElementById("scrubber-container");
+            const progressBar = document.getElementById("progress-bar");
+            const timeDisplay = document.getElementById("time-display");
+            const durationDisplay = document.getElementById("duration");
 
-      const container = document.getElementById("scrubber-container");
-      const progressBar = document.getElementById("progress-bar");
-      const timeDisplay = document.getElementById("time-display");
-      const durationDisplay = document.getElementById("duration");
+            uploadBtn.onclick = async () => {
+                const tempInput = document.createElement("input");
+                tempInput.type = "file";
+                tempInput.accept = "video/*,audio/*,image/*";
 
-      let isScrubbing = false;
+                tempInput.addEventListener("change", async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
 
-      let isAdded = false;
-      engine.init(canvas);
+                    try {
+                        // 3. Kết nối OPFS và tạo file trùng tên
+                        const root = await navigator.storage.getDirectory();
+                        const opfsFileHandle = await root.getFileHandle(
+                            file.name,
+                            {
+                                create: true,
+                            },
+                        );
+                        const writableStream =
+                            await opfsFileHandle.createWritable();
+                        await file.stream().pipeTo(writableStream);
+                    } catch (error) {
+                        console.error(error);
+                    }
+                });
 
-      engine.sub("playback:time-update", (data) => {
-        // time.innerHTML = data.toFixed(3);
-        timeDisplay.innerHTML = data.toFixed(3);
-        progressBar.style.width = `${(data / engine.core.duration) * 100}%`;
-      });
+                tempInput.click();
+            };
 
-      engine.sub("playback:duration-update", (data) => {
-        // time.innerHTML = data.toFixed(3);
-        durationDisplay.innerHTML = data.toFixed(3);
-      });
+            loadBtn.onclick = async () => {
+                const transcript = "transcript.json";
+                const root = await navigator.storage.getDirectory();
+                const fileHandle = await root.getFileHandle(transcript);
+                const file = await fileHandle.getFile();
 
-      engine.sub("playback:buffering", () => {
-        console.log("waiting...");
-      });
+                const captionSource = await engine.sources.add({
+                    src: file,
+                    kind: "caption",
+                });
 
-      engine.sub("playback:buffer-resolved", () => {
-        console.log("resolved");
-      });
+                console.log(captionSource);
+            };
 
-      btnClip.onclick = async () => {
-        const videoClip = await engine.core.addVideoClip({
-          id: "video-clip-id-8",
-          start: 3,
-          sourceStart: 10,
-          duration: 6,
-          trackId: "video-track-id",
-          sourceId: "video-source-id",
-          property: {},
-        });
-      };
+            // let isScrubbing = false;
 
-      loadBtn.onclick = async () => {
-        if (!isAdded) {
-          const video = "preview.mp4";
-          const audio = "5-way.mp3";
-          const img = "next.png";
+            // let isAdded = false;
+            // engine.init(canvas);
 
-          const root = await navigator.storage.getDirectory();
-          const fileHandle = await root.getFileHandle(video);
-          const file = await fileHandle.getFile();
-          const source = await engine.core.addVideoSource({
-            id: "video-source-id",
-            inputSource: file,
-            proxySource: file,
-          });
+            // engine.sub("playback:time-update", (data) => {
+            //   // time.innerHTML = data.toFixed(3);
+            //   timeDisplay.innerHTML = data.toFixed(3);
+            //   progressBar.style.width = `${(data / engine.core.duration) * 100}%`;
+            // });
 
-          const audioFileHandle = await root.getFileHandle(audio);
-          const audioFile = await audioFileHandle.getFile();
-          const audioSource = await engine.core.addAudioSource({
-            id: "audio-source-id",
-            inputSource: audioFile,
-            proxySource: audioFile,
-          });
+            // engine.sub("playback:duration-update", (data) => {
+            //   // time.innerHTML = data.toFixed(3);
+            //   durationDisplay.innerHTML = data.toFixed(3);
+            // });
 
-          const imageFileHandle = await root.getFileHandle(img);
-          const imageFile = await imageFileHandle.getFile();
-          const imageSource = await engine.core.addImageSource({
-            id: "image-source-id",
-            inputSource: imageFile,
-            proxySource: imageFile,
-          });
+            // engine.sub("playback:buffering", () => {
+            //   console.log("waiting...");
+            // });
 
-          const videoTrack = await engine.core.addVideoTrack({
-            id: "video-track-id",
-          });
+            // engine.sub("playback:buffer-resolved", () => {
+            //   console.log("resolved");
+            // });
 
-          const imgTrack = await engine.core.addImageTrack({
-            id: "img-track-id",
-          });
+            // btnClip.onclick = async () => {
+            //   const videoClip = await engine.core.addVideoClip({
+            //     id: "video-clip-id-8",
+            //     start: 3,
+            //     sourceStart: 10,
+            //     duration: 6,
+            //     trackId: "video-track-id",
+            //     sourceId: "video-source-id",
+            //     property: {},
+            //   });
+            // };
 
-          const audioTrack = await engine.core.addAudioTrack({
-            id: "audio-track-id",
-          });
+            // loadBtn.onclick = async () => {
+            //   if (!isAdded) {
+            //     const video = "preview.mp4";
+            //     const audio = "5-way.mp3";
+            //     const img = "next.png";
 
-          const videoClip = await engine.core.addVideoClip({
-            id: "video-clip-id",
-            start: 0,
-            sourceStart: 260,
-            duration: 6,
-            trackId: videoTrack.id,
-            sourceId: source.id,
-            property: {},
-          });
+            //     const root = await navigator.storage.getDirectory();
+            //     const fileHandle = await root.getFileHandle(video);
+            //     const file = await fileHandle.getFile();
+            //     const source = await engine.core.addVideoSource({
+            //       id: "video-source-id",
+            //       inputSource: file,
+            //       proxySource: file,
+            //     });
 
-          const videoClip2 = await engine.core.addVideoClip({
-            id: "video-clip-id-2",
-            start: 5,
-            sourceStart: 190,
-            duration: 7,
-            trackId: videoTrack.id,
-            sourceId: source.id,
-            property: {},
-          });
+            //     const audioFileHandle = await root.getFileHandle(audio);
+            //     const audioFile = await audioFileHandle.getFile();
+            //     const audioSource = await engine.core.addAudioSource({
+            //       id: "audio-source-id",
+            //       inputSource: audioFile,
+            //       proxySource: audioFile,
+            //     });
 
-          const videoClip3 = await engine.core.addVideoClip({
-            id: "video-clip-id-3",
-            start: 12,
-            sourceStart: 20,
-            duration: 6,
-            trackId: videoTrack.id,
-            sourceId: source.id,
-            property: {},
-          });
+            //     const imageFileHandle = await root.getFileHandle(img);
+            //     const imageFile = await imageFileHandle.getFile();
+            //     const imageSource = await engine.core.addImageSource({
+            //       id: "image-source-id",
+            //       inputSource: imageFile,
+            //       proxySource: imageFile,
+            //     });
 
-          const audioClip = await engine.core.addAudioClip({
-            id: "audio-clip-id-3",
-            start: 0,
-            sourceStart: 20,
-            duration: 6,
-            trackId: audioTrack.id,
-            sourceId: audioSource.id,
-            property: {},
-          });
+            //     const videoTrack = await engine.core.addVideoTrack({
+            //       id: "video-track-id",
+            //     });
 
-          const imageClip = await engine.core.addImageClip({
-            id: "image-clip-id",
-            start: 3,
-            duration: 6,
-            trackId: imgTrack.id,
-            sourceId: imageSource.id,
-            property: {},
-          });
+            //     const imgTrack = await engine.core.addImageTrack({
+            //       id: "img-track-id",
+            //     });
 
-          isAdded = true;
-        }
-      };
+            //     const audioTrack = await engine.core.addAudioTrack({
+            //       id: "audio-track-id",
+            //     });
 
-      btnSeek.onclick = async () => {
-        engine.seek(3);
-      };
+            //     const videoClip = await engine.core.addVideoClip({
+            //       id: "video-clip-id",
+            //       start: 0,
+            //       sourceStart: 260,
+            //       duration: 6,
+            //       trackId: videoTrack.id,
+            //       sourceId: source.id,
+            //       property: {},
+            //     });
 
-      btn.onclick = async () => {
-        // const url =
-        //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/How%20To%20Animate%20Your%20Own%20Custom%20Characters%20in%20Premiere%20Pro!%20-%20finzar%20(1080p%2C%20h264).mp4";
-        // const audio =
-        //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/sabrina.mp3";
-        // const img =
-        //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/next.png";
+            //     const videoClip2 = await engine.core.addVideoClip({
+            //       id: "video-clip-id-2",
+            //       start: 5,
+            //       sourceStart: 190,
+            //       duration: 7,
+            //       trackId: videoTrack.id,
+            //       sourceId: source.id,
+            //       property: {},
+            //     });
 
-        engine.togglePlay();
+            //     const videoClip3 = await engine.core.addVideoClip({
+            //       id: "video-clip-id-3",
+            //       start: 12,
+            //       sourceStart: 20,
+            //       duration: 6,
+            //       trackId: videoTrack.id,
+            //       sourceId: source.id,
+            //       property: {},
+            //     });
 
-        // ---------------------------------------------
-        // const tempInput = document.createElement("input");
-        // tempInput.type = "file";
-        // tempInput.accept = "video/*,audio/*,image/*"; // Giới hạn chọn file media
+            //     const audioClip = await engine.core.addAudioClip({
+            //       id: "audio-clip-id-3",
+            //       start: 0,
+            //       sourceStart: 20,
+            //       duration: 6,
+            //       trackId: audioTrack.id,
+            //       sourceId: audioSource.id,
+            //       property: {},
+            //     });
 
-        // // 2. Lắng nghe khi người dùng chọn file xong
-        // tempInput.addEventListener("change", async (event) => {
-        //   const file = event.target.files[0];
-        //   if (!file) return;
+            //     const imageClip = await engine.core.addImageClip({
+            //       id: "image-clip-id",
+            //       start: 3,
+            //       duration: 6,
+            //       trackId: imgTrack.id,
+            //       sourceId: imageSource.id,
+            //       property: {},
+            //     });
 
-        //   try {
-        //     // 3. Kết nối OPFS và tạo file trùng tên
-        //     const root = await navigator.storage.getDirectory();
-        //     const opfsFileHandle = await root.getFileHandle(file.name, {
-        //       create: true,
-        //     });
-        //     // 4. Đổ trực tiếp luồng stream của file vào OPFS
-        //     const writableStream = await opfsFileHandle.createWritable();
-        //     await file.stream().pipeTo(writableStream);
-        //   } catch (error) {
-        //     console.error(error);
-        //   }
-        // });
+            //     isAdded = true;
+            //   }
+            // };
 
-        // // 3. Kích hoạt hộp thoại mở file của hệ thống ngay lập tức
-        // tempInput.click();
-      };
+            // btnSeek.onclick = async () => {
+            //     // engine.seek(3);
+            //     //
+            //     console.log("CLick");
+            //     const result = await engine.sources.add("my source:", {
+            //         kind: "audio",
+            //     });
+            //     console.log(result);
+            // };
 
-      function updateScrub(e) {
-        const totalDuration = engine.core.duration;
-        const rect = container.getBoundingClientRect();
+            // btn.onclick = async () => {
+            //   // const url =
+            //   //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/How%20To%20Animate%20Your%20Own%20Custom%20Characters%20in%20Premiere%20Pro!%20-%20finzar%20(1080p%2C%20h264).mp4";
+            //   // const audio =
+            //   //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/sabrina.mp3";
+            //   // const img =
+            //   //   "https://pub-decf4c7e971344158c01d31cc955c10f.r2.dev/next.png";
 
-        let percent = (e.clientX - rect.left) / rect.width;
-        percent = Math.max(0, Math.min(1, percent));
-        progressBar.style.width = `${percent * 100}%`;
-        const currentSeconds = percent * totalDuration;
-        timeDisplay.textContent = currentSeconds.toFixed(3);
-        engine.scrub(currentSeconds);
-      }
+            //   engine.togglePlay();
 
-      container.addEventListener("pointerdown", (e) => {
-        isScrubbing = true;
-        container.setPointerCapture(e.pointerId);
-        engine.startScrub();
-        updateScrub(e);
-      });
+            //   // ---------------------------------------------
+            //   // const tempInput = document.createElement("input");
+            //   // tempInput.type = "file";
+            //   // tempInput.accept = "video/*,audio/*,image/*"; // Giới hạn chọn file media
 
-      container.addEventListener("pointermove", (e) => {
-        if (!isScrubbing) return;
-        updateScrub(e);
-      });
+            //   // // 2. Lắng nghe khi người dùng chọn file xong
+            //   // tempInput.addEventListener("change", async (event) => {
+            //   //   const file = event.target.files[0];
+            //   //   if (!file) return;
 
-      function handlePointerUp(e) {
-        if (!isScrubbing) return;
-        isScrubbing = false;
-        const r = engine.endScrub();
-      }
+            //   //   try {
+            //   //     // 3. Kết nối OPFS và tạo file trùng tên
+            //   //     const root = await navigator.storage.getDirectory();
+            //   //     const opfsFileHandle = await root.getFileHandle(file.name, {
+            //   //       create: true,
+            //   //     });
+            //   //     // 4. Đổ trực tiếp luồng stream của file vào OPFS
+            //   //     const writableStream = await opfsFileHandle.createWritable();
+            //   //     await file.stream().pipeTo(writableStream);
+            //   //   } catch (error) {
+            //   //     console.error(error);
+            //   //   }
+            //   // });
 
-      container.addEventListener("pointerup", handlePointerUp);
-      container.addEventListener("pointercancel", handlePointerUp);
-    </script>
-  </body>
+            //   // // 3. Kích hoạt hộp thoại mở file của hệ thống ngay lập tức
+            //   // tempInput.click();
+            // };
+
+            // function updateScrub(e) {
+            //   const totalDuration = engine.core.duration;
+            //   const rect = container.getBoundingClientRect();
+
+            //   let percent = (e.clientX - rect.left) / rect.width;
+            //   percent = Math.max(0, Math.min(1, percent));
+            //   progressBar.style.width = `${percent * 100}%`;
+            //   const currentSeconds = percent * totalDuration;
+            //   timeDisplay.textContent = currentSeconds.toFixed(3);
+            //   engine.scrub(currentSeconds);
+            // }
+
+            // container.addEventListener("pointerdown", (e) => {
+            //   isScrubbing = true;
+            //   container.setPointerCapture(e.pointerId);
+            //   engine.startScrub();
+            //   updateScrub(e);
+            // });
+
+            // container.addEventListener("pointermove", (e) => {
+            //   if (!isScrubbing) return;
+            //   updateScrub(e);
+            // });
+
+            // function handlePointerUp(e) {
+            //   if (!isScrubbing) return;
+            //   isScrubbing = false;
+            //   const r = engine.endScrub();
+            // }
+
+            // container.addEventListener("pointerup", handlePointerUp);
+            // container.addEventListener("pointercancel", handlePointerUp);
+        </script>
+    </body>
 </html>
