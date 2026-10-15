@@ -2,13 +2,30 @@
 
 import { CoreWorkerAPI, RPCRequest, RPCResponse } from "../client/type";
 import { apiController } from "../module/api-controller";
-import { popTransfer, withTransfer } from "../utils/transfer";
+import { popTransfer } from "../utils/transfer";
 
 const taskQueue = Promise.resolve();
 
 const methods: CoreWorkerAPI = {
+  init: async (payload) => {
+    await apiController.engine.init(payload);
+  },
+
+  start: async (payload) => {
+    await apiController.engine.start(payload);
+  },
+  stop: async (payload) => {
+    await apiController.engine.stop(payload);
+  },
+  seek: async (payload) => {
+    await apiController.engine.seek(payload);
+  },
   addSource: async (payload) => {
-    const result = await apiController.source.add(payload);
+    const result = await apiController.sources.add(payload);
+    return result;
+  },
+  addTrack: async (payload) => {
+    const result = apiController.tracks.add(payload);
     return result;
   },
 };

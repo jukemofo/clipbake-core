@@ -17,10 +17,17 @@
                         Load
                     </button>
                     <button
-                        id="playBtn"
+                        id="startBtn"
                         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
                     >
-                        Play Video
+                        Start
+                    </button>
+
+                    <button
+                        id="stopBtn"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+                    >
+                        Stop
                     </button>
 
                     <button
@@ -93,8 +100,9 @@
 
         <!-- Trỏ thẳng vào file TS nguồn, Vite tự biên dịch luôn không cần chờ build! -->
         <script type="module">
-            import { engine } from "./src/index.ts";
-            const btn = document.getElementById("playBtn");
+            import { engine, MediaKind } from "./src/index.ts";
+            const startBtn = document.getElementById("startBtn");
+            const stopBtn = document.getElementById("stopBtn");
             const loadBtn = document.getElementById("loadBtn");
             const btnSeek = document.getElementById("seekBtn");
             const btnClip = document.getElementById("clipBtn");
@@ -106,6 +114,13 @@
             const progressBar = document.getElementById("progress-bar");
             const timeDisplay = document.getElementById("time-display");
             const durationDisplay = document.getElementById("duration");
+
+            engine.init(canvas, {
+                width: 1920,
+                height: 1080,
+                fps: 60,
+                backgroundColor: "#000000",
+            });
 
             uploadBtn.onclick = async () => {
                 const tempInput = document.createElement("input");
@@ -148,6 +163,19 @@
                 });
 
                 console.log(captionSource);
+
+                const captionTrack = await engine.tracks.add({
+                    kind: MediaKind.CAPTION,
+                });
+                console.log(captionTrack);
+            };
+
+            startBtn.onclick = async () => {
+                engine.start();
+            };
+
+            stopBtn.onclick = async () => {
+                engine.stop();
             };
 
             // let isScrubbing = false;

@@ -11,21 +11,22 @@ import {
   VideoSource,
   VideoSourceWorker,
 } from "../../types/source";
-import { dtCentral } from "./data-central";
+import { dataRepository } from "./data-repository";
 import { AddSourceDto } from "./dto/source-dto";
 import { Word } from "../../types/words";
 import { isWordArray } from "../utils/source";
+import { MediaKind } from "../../types/kind";
 
 export class APISourceService {
   public async add({ src, proxy, kind }: AddSourceDto): Promise<AnySource> {
     switch (kind) {
-      case "video":
+      case MediaKind.VIDEO:
         return await this._generateVideoSource(src, proxy);
-      case "audio":
+      case MediaKind.AUDIO:
         return await this._generateAudioSource(src, proxy);
-      case "image":
+      case MediaKind.IMAGE:
         return await this._generateImageSource(src);
-      case "caption":
+      case MediaKind.CAPTION:
         return await this._generateCaptionSource(src);
       default:
         throw new Error(`Unsupport source ${kind}`);
@@ -51,8 +52,8 @@ export class APISourceService {
 
     const videoSource: VideoSource = {
       id: nanoid(),
-      kind: "video",
-      name: "",
+      kind: MediaKind.VIDEO,
+      name: src instanceof File ? src.name : "",
       width: width,
       height: height,
       duration: duration,
@@ -72,7 +73,7 @@ export class APISourceService {
       videoSourceWorker.proxyAudTrack = proxyAudTrack;
     }
 
-    dtCentral.sources.add(videoSourceWorker);
+    dataRepository.sources.add(videoSourceWorker);
 
     return videoSource;
   }
@@ -93,8 +94,8 @@ export class APISourceService {
 
     const audioSource: AudioSource = {
       id: nanoid(),
-      kind: "audio",
-      name: "",
+      kind: MediaKind.AUDIO,
+      name: src instanceof File ? src.name : "",
       duration: duration,
     };
 
@@ -107,7 +108,7 @@ export class APISourceService {
       const { audTrack: proxyAudTrack } = await this._extractTracks(proxy);
       audioSourceWorker.proxyAudTrack = proxyAudTrack;
     }
-    dtCentral.sources.add(audioSourceWorker);
+    dataRepository.sources.add(audioSourceWorker);
     return audioSourceWorker;
   }
 
@@ -127,8 +128,8 @@ export class APISourceService {
     const canvas = await this._loadImgCanvas(src);
     const imageSource: ImageSource = {
       id: nanoid(),
-      name: "",
-      kind: "image",
+      name: src instanceof File ? src.name : "",
+      kind: MediaKind.IMAGE,
       width: canvas.width,
       height: canvas.height,
     };
@@ -136,7 +137,7 @@ export class APISourceService {
       ...imageSource,
       canvas: canvas,
     };
-    dtCentral.sources.add(imageSourceWorker);
+    dataRepository.sources.add(imageSourceWorker);
     return imageSource;
   }
 
@@ -194,8 +195,8 @@ export class APISourceService {
 
     const captionSource: CaptionSource = {
       id: nanoid(),
-      name: "",
-      kind: "caption",
+      name: src instanceof File ? src.name : "",
+      kind: MediaKind.CAPTION,
       duration: data.at(-1)!.end,
     };
 
@@ -204,7 +205,7 @@ export class APISourceService {
       captions: data,
     };
 
-    dtCentral.sources.add(captionSourceWorker);
+    dataRepository.sources.add(captionSourceWorker);
 
     return captionSource;
   }

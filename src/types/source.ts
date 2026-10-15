@@ -1,6 +1,7 @@
 import { InputAudioTrack, InputVideoTrack } from "mediabunny";
 import { Second } from "./time";
 import { Word } from "./words";
+import { MediaKind } from "./kind";
 
 export interface BaseSource {
   id: string;
@@ -8,7 +9,7 @@ export interface BaseSource {
 }
 
 export interface VideoSource extends BaseSource {
-  kind: "video";
+  kind: MediaKind.VIDEO;
   duration: Second;
   width: number;
   height: number;
@@ -23,7 +24,7 @@ export interface VideoSourceWorker extends VideoSource {
 }
 
 export interface AudioSource extends BaseSource {
-  kind: "audio";
+  kind: MediaKind.AUDIO;
   duration: Second;
 }
 
@@ -33,7 +34,7 @@ export interface AudioSourceWorker extends AudioSource {
 }
 
 export interface ImageSource extends BaseSource {
-  kind: "image";
+  kind: MediaKind.IMAGE;
   width: number;
   height: number;
 }
@@ -43,7 +44,7 @@ export interface ImageSourceWorker extends ImageSource {
 }
 
 export interface CaptionSource extends BaseSource {
-  kind: "caption";
+  kind: MediaKind.CAPTION;
   duration: Second;
 }
 

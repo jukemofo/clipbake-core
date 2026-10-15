@@ -1,5 +1,13 @@
 import { AnySource } from "../../types/source";
+import { AnyTrack } from "../../types/track";
+import {
+  InitEngineDto,
+  SeekEngineDto,
+  StartEngineDto,
+  StopEngineDto,
+} from "../module/dto/engine-dto";
 import { AddSourceDto } from "../module/dto/source-dto";
+import { AddTrackDto } from "../module/dto/track-dto";
 
 export interface RPCRequest {
   id: number;
@@ -27,5 +35,10 @@ export interface WorkerAPIExample {
 }
 
 export interface CoreWorkerAPI {
+  init: (payload: InitEngineDto) => Promise<void>;
   addSource: (payload: AddSourceDto) => Promise<AnySource>;
+  addTrack: (payload: AddTrackDto) => Promise<AnyTrack>;
+  start: (payload: StartEngineDto) => Promise<void>;
+  stop: (payload: StopEngineDto) => Promise<void>;
+  seek: (payload: SeekEngineDto) => Promise<void>;
 }
