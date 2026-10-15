@@ -3,6 +3,7 @@ import { Settings } from "../../types/settings";
 import { AnyTrack } from "../../types/track";
 import { AnyClip } from "../../types/clip";
 import { Second } from "../../types/time";
+import { gsap } from "gsap";
 
 DOMAdapter.set(WebWorkerAdapter);
 
@@ -11,6 +12,7 @@ export let app: Application | null = null;
 export class RenderService {
   private _app: Application;
   private _isInit: boolean;
+  private _masterTimelineAnim = gsap.timeline({ paused: true });
 
   constructor() {
     this._app = new Application();
@@ -27,7 +29,9 @@ export class RenderService {
     this._isInit = true;
   }
 
-  public async render(currentTime: Second) {}
+  public async render(currentTime: Second) {
+    this._masterTimelineAnim.seek(currentTime);
+  }
 
   public async addTrack(track: AnyTrack, order: number) {}
 
