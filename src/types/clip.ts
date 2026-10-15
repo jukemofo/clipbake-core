@@ -13,12 +13,14 @@ export interface VideoClip extends BaseClip {
   sourceId: string;
   sourceStart: Second;
   kind: MediaKind.VIDEO;
+  volume?: number;
 }
 
 export interface AudioClip extends BaseClip {
   sourceId: string;
   sourceStart: Second;
   kind: MediaKind.AUDIO;
+  volume?: number;
 }
 
 export interface ImageClip extends BaseClip {

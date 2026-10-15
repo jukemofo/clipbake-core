@@ -36,7 +36,7 @@ export class APISourceService {
   private async _generateVideoSource(
     src: File | string,
     proxy?: File | string,
-  ) {
+  ): Promise<VideoSource> {
     const { vidTrack, audTrack } = await this._extractTracks(src);
 
     if (!vidTrack) {
@@ -81,7 +81,7 @@ export class APISourceService {
   private async _generateAudioSource(
     src: File | string,
     proxy?: File | string,
-  ) {
+  ): Promise<AudioSource> {
     const { audTrack } = await this._extractTracks(src);
 
     if (!audTrack) {
@@ -109,7 +109,8 @@ export class APISourceService {
       audioSourceWorker.proxyAudTrack = proxyAudTrack;
     }
     dataRepository.sources.add(audioSourceWorker);
-    return audioSourceWorker;
+
+    return audioSource;
   }
 
   private async _extractTracks(src: File | string) {
@@ -124,7 +125,7 @@ export class APISourceService {
     return { vidTrack, audTrack };
   }
 
-  private async _generateImageSource(src: File | string) {
+  private async _generateImageSource(src: File | string): Promise<ImageSource> {
     const canvas = await this._loadImgCanvas(src);
     const imageSource: ImageSource = {
       id: nanoid(),
@@ -171,7 +172,9 @@ export class APISourceService {
     }
   }
 
-  private async _generateCaptionSource(src: File | string) {
+  private async _generateCaptionSource(
+    src: File | string,
+  ): Promise<CaptionSource> {
     let data: Word[] = [];
 
     if (src instanceof File) {

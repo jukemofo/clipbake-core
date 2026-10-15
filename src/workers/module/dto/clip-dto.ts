@@ -1,3 +1,4 @@
+import { AnyClip } from "../../../types/clip";
 import { MediaKind } from "../../../types/kind";
 import { Second } from "../../../types/time";
 
@@ -41,3 +42,8 @@ export type AddClipDto =
   | AddImageClipDto
   | AddCaptionClipDto
   | AddTextClipDto;
+
+export type AddClipResponseDto = {
+  clip: AnyClip;
+  actualClipsOnTrack: AnyClip[];
+};

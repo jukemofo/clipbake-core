@@ -28,6 +28,15 @@ const methods: CoreWorkerAPI = {
     const result = apiController.tracks.add(payload);
     return result;
   },
+  addClip: async (payload) => {
+    const result = apiController.clips.add(payload);
+    return result;
+  },
+
+  getDuration: async () => {
+    const result = apiController.project.getDuration();
+    return result;
+  },
 };
 
 self.onmessage = (e: MessageEvent<RPCRequest>) => {

@@ -152,22 +152,50 @@
             };
 
             loadBtn.onclick = async () => {
-                const transcript = "transcript.json";
                 const root = await navigator.storage.getDirectory();
+
+                const transcript = "transcript.json";
                 const fileHandle = await root.getFileHandle(transcript);
                 const file = await fileHandle.getFile();
 
                 const captionSource = await engine.sources.add({
                     src: file,
-                    kind: "caption",
-                });
-
-                console.log(captionSource);
-
-                const captionTrack = await engine.tracks.add({
                     kind: MediaKind.CAPTION,
                 });
-                console.log(captionTrack);
+
+                const captionTrackId = await engine.tracks.add({
+                    kind: MediaKind.CAPTION,
+                });
+
+                const captionClip = await engine.clips.add({
+                    kind: MediaKind.CAPTION,
+                    sourceId: captionSource.id,
+                    trackId: captionTrackId,
+                    start: 0,
+                    duration: 5,
+                    sourceStart: 0,
+                });
+
+                // const audio = "5-way.mp3";
+                // const audioFileHandle = await root.getFileHandle(audio);
+                // const audioFile = await audioFileHandle.getFile();
+                // const audioSource = await engine.sources.add({
+                //     src: audioFile,
+                //     kind: MediaKind.AUDIO,
+                // });
+
+                // const audioTrackId = await engine.tracks.add({
+                //     kind: MediaKind.AUDIO,
+                // });
+
+                // const audioClip = await engine.clips.add({
+                //     kind: MediaKind.AUDIO,
+                //     sourceId: audioSource.id,
+                //     trackId: audioTrackId,
+                //     start: 2,
+                //     duration: 5,
+                //     sourceStart: 10,
+                // });
             };
 
             startBtn.onclick = async () => {
@@ -176,6 +204,7 @@
 
             stopBtn.onclick = async () => {
                 engine.stop();
+                console.log(engine.duration);
             };
 
             // let isScrubbing = false;

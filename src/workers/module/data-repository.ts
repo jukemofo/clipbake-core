@@ -1,7 +1,15 @@
 import { nanoid } from "nanoid";
+import {
+  AnyClip,
+  AudioClip,
+  CaptionClip,
+  ImageClip,
+  VideoClip,
+} from "../../types/clip";
+import { MediaKind } from "../../types/kind";
 import { Project } from "../../types/project";
-import { AnySourceWorker } from "../../types/source";
 import { Settings } from "../../types/settings";
+import { AnySourceWorker } from "../../types/source";
 import {
   AnyTrack,
   AudioTrack,
@@ -10,8 +18,6 @@ import {
   TextTrack,
   VideoTrack,
 } from "../../types/track";
-import { MediaKind } from "../../types/kind";
-import { AnyClip, VideoClip } from "../../types/clip";
 
 class DataRepository {
   private _project: Project;
@@ -25,6 +31,7 @@ class DataRepository {
         backgroundColor: "#000000",
         fps: 60,
       },
+      duration: 0,
       sources: new Map(),
       tracks: new Map(),
       videoTrackIds: [],
@@ -81,6 +88,12 @@ class DataRepository {
           this._project.textTrackIds.push(trackId);
           break;
       }
+
+      this._updateDuration();
+    },
+
+    getVisualOrder: (trackId: string) => {
+      return this._project.visualTrackOrders.findIndex((id) => id === trackId);
     },
   };
 
@@ -98,23 +111,22 @@ class DataRepository {
 
       switch (clipKind) {
         case MediaKind.VIDEO:
-          this._throwIfSourceNotExisted(clip.sourceId);
+          this._normalizedClipSource(clip);
           (track as VideoTrack).clips.push(clip);
           break;
         case MediaKind.AUDIO:
-          this._throwIfSourceNotExisted(clip.sourceId);
+          this._normalizedClipSource(clip);
           (track as AudioTrack).clips.push(clip);
           break;
         case MediaKind.IMAGE:
-          this._throwIfSourceNotExisted(clip.sourceId);
+          this._normalizedClipSource(clip);
           (track as ImageTrack).clips.push(clip);
           break;
         case MediaKind.CAPTION:
-          this._throwIfSourceNotExisted(clip.sourceId);
+          this._normalizedClipSource(clip);
           (track as CaptionTrack).clips.push(clip);
           break;
         case MediaKind.TEXT:
-          this._throwIfSourceNotExisted(clip.sourceId);
           (track as TextTrack).clips.push(clip);
           break;
         default:
@@ -122,15 +134,51 @@ class DataRepository {
       }
 
       this._normalizedClipsOnTrack(track);
-
+      this._updateDuration();
       return track.clips;
     },
   };
 
-  private _throwIfSourceNotExisted(sourceId: string) {
-    const source = this._project.sources.get(sourceId);
+  public readonly project = {
+    getDuration: () => {
+      return this._project.duration;
+    },
+  };
+
+  private _updateDuration() {
+    let duration = 0;
+    for (const track of this._project.tracks.values()) {
+      if (track.clips.length === 0) {
+        continue;
+      }
+      const last = track.clips.at(-1)!;
+      duration = Math.max(duration, last.start + last.duration);
+    }
+    this._project.duration = duration;
+  }
+
+  private _normalizedClipSource(
+    clip: VideoClip | AudioClip | CaptionClip | ImageClip,
+  ) {
+    const source = this._project.sources.get(clip.sourceId);
     if (!source) {
-      throw new Error(`Source ${sourceId} doesn't exist!`);
+      throw new Error(`Source ${clip.sourceId} doesn't exist!`);
+    }
+    if (source.kind !== clip.kind) {
+      throw new Error(`Source type doesn't match!`);
+    }
+    if (source.kind === MediaKind.IMAGE || clip.kind === MediaKind.IMAGE) {
+      return;
+    }
+
+    const sourceEnd = clip.sourceStart + clip.duration;
+    if (clip.sourceStart > source.duration) {
+      throw new Error(
+        `clip out of time source (${clip.sourceStart} > ${source.duration})`,
+      );
+    }
+    if (sourceEnd > source.duration) {
+      clip.duration = Math.max(0, source.duration - clip.sourceStart);
     }
   }
 

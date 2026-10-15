@@ -1,62 +1,66 @@
 import { nanoid } from "nanoid";
 import { MediaKind } from "../../types/kind";
-import {
-  AnyTrack,
-  AudioTrack,
-  CaptionTrack,
-  ImageTrack,
-  TextTrack,
-  VideoTrack,
-} from "../../types/track";
+
 import { dataRepository } from "./data-repository";
-import { AnyClip } from "../../types/clip";
-import { AddClipDto } from "./dto/clip-dto";
+import {
+  AnyClip,
+  AudioClip,
+  VideoClip,
+  ImageClip,
+  CaptionClip,
+  TextClip,
+} from "../../types/clip";
+import { AddClipDto, AddClipResponseDto } from "./dto/clip-dto";
 
 export class APIClipService {
-  public add(clip: AddClipDto): AnyClip[] {
-    // const track = this._generateTrack(kind);
-    // dataRepository.clips.add(track);
-    // return track;
-    return [];
+  public add(clipDto: AddClipDto): AddClipResponseDto {
+    const clip = this._generateClip(clipDto);
+    const results = dataRepository.clips.add(clip);
+    const currentClip = results.find((c) => c.id === clip.id);
+    if (!currentClip) {
+      throw new Error("Something went wrong while adding new clip");
+    }
+    return { clip: currentClip, actualClipsOnTrack: results };
   }
 
-  private _generateTrack(kind: MediaKind): AnyTrack {
+  private _generateClip(clipDto: AddClipDto): AnyClip {
+    const kind = clipDto.kind;
     switch (kind) {
       case MediaKind.VIDEO:
-        const videoTrack: VideoTrack = {
+        const videoClip: VideoClip = {
           id: nanoid(),
-          clips: [],
-          kind: kind,
+          name: "",
+          ...clipDto,
         };
-        return videoTrack;
+        return videoClip;
       case MediaKind.AUDIO:
-        const audioTrack: AudioTrack = {
+        const audioClip: AudioClip = {
           id: nanoid(),
-          clips: [],
-          kind: kind,
+          name: "",
+          ...clipDto,
         };
-        return audioTrack;
+        return audioClip;
       case MediaKind.IMAGE:
-        const imageTrack: ImageTrack = {
+        const imageClip: ImageClip = {
           id: nanoid(),
-          clips: [],
-          kind: kind,
+          name: "",
+          ...clipDto,
         };
-        return imageTrack;
+        return imageClip;
       case MediaKind.CAPTION:
-        const captionTrack: CaptionTrack = {
+        const captionClip: CaptionClip = {
           id: nanoid(),
-          clips: [],
-          kind: kind,
+          name: "",
+          ...clipDto,
         };
-        return captionTrack;
+        return captionClip;
       case MediaKind.TEXT:
-        const textTrack: TextTrack = {
+        const textClip: TextClip = {
           id: nanoid(),
-          clips: [],
-          kind: kind,
+          name: "",
+          ...clipDto,
         };
-        return textTrack;
+        return textClip;
       default:
         throw new Error(`Unsupport track's type "${kind}"`);
     }

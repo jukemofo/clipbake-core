@@ -1,5 +1,8 @@
+import { AnyClip } from "../../types/clip";
 import { AnySource } from "../../types/source";
+import { Second } from "../../types/time";
 import { AnyTrack } from "../../types/track";
+import { AddClipDto, AddClipResponseDto } from "../module/dto/clip-dto";
 import {
   InitEngineDto,
   SeekEngineDto,
@@ -36,9 +39,11 @@ export interface WorkerAPIExample {
 
 export interface CoreWorkerAPI {
   init: (payload: InitEngineDto) => Promise<void>;
-  addSource: (payload: AddSourceDto) => Promise<AnySource>;
-  addTrack: (payload: AddTrackDto) => Promise<AnyTrack>;
   start: (payload: StartEngineDto) => Promise<void>;
   stop: (payload: StopEngineDto) => Promise<void>;
   seek: (payload: SeekEngineDto) => Promise<void>;
+  addSource: (payload: AddSourceDto) => Promise<AnySource>;
+  addTrack: (payload: AddTrackDto) => Promise<AnyTrack>;
+  addClip: (payload: AddClipDto) => Promise<AddClipResponseDto>;
+  getDuration: () => Promise<Second>;
 }

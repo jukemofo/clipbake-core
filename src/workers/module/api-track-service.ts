@@ -17,6 +17,10 @@ export class APITrackService {
     return track;
   }
 
+  public getVisualTrackOrder(trackId: string): number {
+    return dataRepository.tracks.getVisualOrder(trackId);
+  }
+
   private _generateTrack(kind: MediaKind): AnyTrack {
     switch (kind) {
       case MediaKind.VIDEO:
